@@ -1,0 +1,77 @@
+<?php
+
+/* 
+  imagecache.module - dynamic image resizer and cache
+  
+  $get[q] = files/imagecache/resize/width/height/path
+  $get[q] = files/imagecache/scale/width/height/path
+
+  TODO: throttle per user using session id.
+	improve image resizing, reduce distortion.
+*/
+
+function imagecache_help($section) {
+  switch($section) {
+    case 'admin/modules#description': return t('enable dynamic image resizer');
+  }
+}
+
+function imagecache_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+    $items[] = array('path' => 'files/imagecache', 'title' => t('RSS feed'),
+      'callback' => 'imagecache_cache',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK);     
+  }
+  return $items;
+}
+
+
+function imagecache_cache() {
+  $generated = false;
+  $args = func_get_args();
+  $destination = file_create_path() . '/imagecache/' . implode('/', $args);
+  if (file_check_directory(dirname($destination), 1)) {
+    $function = array_shift($args);
+		
+    switch ($function) {
+      case 'resize':
+        $width = array_shift($args);
+        $height = array_shift($args);
+        $source = file_create_path(implode('/', $args));
+        if (!is_file($source)) { drupal_set_message('$source does not exist'); }
+        if (image_resize($source, $destination, $width, $height)) $generated = true;
+        break;
+
+      case 'scale':
+        $width = array_shift($args);
+        $height = array_shift($args);
+        $source = file_create_path(implode('/', $args));
+        if (!is_file($source)) { drupal_set_message('$source does not exist'); }
+        if (image_scale($source, $destination, $width, $height)) {
+					$generated = true;
+				}
+				else {
+				}
+        break;
+   
+    }
+    if ($generated)  {
+			if (function_exists('mime_content_type')) {
+ 				$mime = mime_content_type($destination);
+			} 
+			else {
+				$size = getimagesize($destination);
+				$mime = $size['mime'];
+			}
+			file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
+    }
+  }
+  else {
+		//drupal_set_message('could not create directory for cached image');
+  }
+  //drupal_set_message("d: $destination; s: $source; f: $function; w: $width; h: $height");
+  //file_transfer($not_found_image);
+  //print theme('page','cached image');
+}
