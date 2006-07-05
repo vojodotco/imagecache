@@ -1,28 +1,46 @@
 <?php
-
+// $Id$
 /* 
   imagecache.module - dynamic image resizer and cache
-  
-  $get[q] = files/imagecache/resize/width/height/path
-  $get[q] = files/imagecache/scale/width/height/path
 
-  TODO: throttle per user using session id.
-	improve image resizing, reduce distortion.
+  imagecache allows you to setup specialized identifiers for dynamic image processing
+  and caching. It abuses the rewrite rules that provide drupal's clean urls to provide
+  dynamic image generation. 
+
+  Eariler security flaws were overcome by using 'rulesets' similar to what the image.module does.
+  Only we don't fuss with the database, and creating data that we have to keep up with in drupal.
+  We do it on the fly and flush it when we want to, or when a ruleset changes.
+  
+  $get[q] = files/imagecache/<ruleset>/path
+
+	@todo: improve image resizing, reduce distortion.
+  @todo: add watermarking capabilities.
 */
 
 function imagecache_help($section) {
   switch($section) {
-    case 'admin/modules#description': return t('enable dynamic image resizer');
+    case 'admin/modules#description': return t('enable dynamic image manipulator');
   }
 }
+
+function imagecache_perm() {
+  return array('administer imagecache','flush imagecache');
+}
+
 
 function imagecache_menu($may_cache) {
   $items = array();
   if ($may_cache) {
-    $items[] = array('path' => 'files/imagecache', 'title' => t('RSS feed'),
-      'callback' => 'imagecache_cache',
-      'access' => TRUE,
-      'type' => MENU_CALLBACK);     
+    $items[] = array( 'path' => 'files/imagecache', 
+                      'callback' => 'imagecache_cache',
+                      'access' => TRUE,
+                      'type' => MENU_CALLBACK
+               );     
+    $items[] = array( 'path' => 'admin/imagecache', 
+                      'title' => t('ImageCache'),
+                      'access' => user_access('administer imagecache'),
+                      'callback' => 'imagecache_admin_list',
+               );
   }
   return $items;
 }
@@ -55,6 +73,10 @@ function imagecache_cache() {
 				else {
 				}
         break;
+    
+      case 'crop':
+        break;
+        
    
     }
     if ($generated)  {
@@ -75,3 +97,391 @@ function imagecache_cache() {
   //file_transfer($not_found_image);
   //print theme('page','cached image');
 }
+
+function _imagecache_get_rulesets() {
+  $rulesets = array();
+  $result = db_query('SELECT rulesetid, rulesetname FROM {imagecache_rulesets} ORDER BY rulesetname');
+  while($row = db_fetch_array($result)) {
+    $rulesets[$row['rulesetid']] = $row;
+  }
+  return $rulesets;
+}
+
+function _imagecache_get_actions_by_rulesetid($rulesetid) {
+  $actions = array();
+  $result = db_query('SELECT weight, data FROM {imagecache_actions} where rulesetid=%d order by weight',$rulesetid);
+  while($row = db_fetch_array($result)) {
+    $actions[] = $row;
+  }
+  return $actions;
+}
+
+function imagecache_admin_list() {
+  // screw fapi. Its inability to handled nested submit buttons or any sort of additional data on a submit
+  // button is frustrating.. So we're gonna do it ourself.
+  
+  debug_msg($_POST['ruleset-op']);
+  foreach($_POST['ruleset-op'] as $rulesetid => $action) {
+    $rulesetid = check_plain($rulesetid);
+    switch($action) {
+      case t('Update Ruleset'):  _imagecache_ruleset_update($rulesetid);
+                            break;
+      case t('Delete Ruleset'):  _imagecache_ruleset_delete($rulesetid);
+                            break;
+      case t('Flush Ruleset'):   _imagecache_ruleset_flush($rulesetid);
+                            break;
+    }
+  }
+  
+  $rulesets = _imagecache_get_rulesets();
+  drupal_set_title('Imagecache Administration');
+  $form['title'] = array('#type' => 'markup', '#value' => 'Rulesets', '#theme' => 'imagecache_admin_title');
+  $form['#submit'] = array('imagecache_admin_submit' => array());
+  $form['rulesets']['#tree'] = TRUE;
+  if (count($rulesets)) {
+    foreach($rulesets as $rulesetid => $ruleset) {
+      $form['rulesets'][$rulesetid] = array(
+        '#type' => 'fieldset',
+        '#title' => t($ruleset['rulesetname']),
+        '#collapsible' => TRUE,
+      );
+      
+      $form['rulesets'][$rulesetid]['name'] = array(
+        '#type' => 'textfield',
+        '#title' => 'NameSpace',
+        '#default_value' => $ruleset['rulesetname'],
+        '#description' => t('string that will be used as an identifier in the url for this set of handlers. Final urls will look like http://example.com/files/imagecache/%namespace/&lt;path to orig&gt;', array('%namespace' => theme('placeholder',$ruleset['rulesetname']))),
+      );
+      $form['rulesets'][$rulesetid]['handlers'] = array (
+        '#type' => 'fieldset',
+        '#title' => t('image handlers'),
+      );
+     
+      $actions = _imagecache_get_actions_by_rulesetid($ruleset['rulesetid']);
+      $form['rulesets'][$rulesetid]['handlers'] = _imagecache_actions_form($actions);
+      $form['rulesets'][$rulesetid]['ops']['#tree'] = FALSE;
+      $form['rulesets'][$rulesetid]['ops']['update'] = array(
+        '#type' => 'submit',
+        //'#name' => 'ruleset-op-'.$rulesetid,
+        '#name' => 'ruleset-op['.$rulesetid.']',
+        '#value' => t('Update Ruleset'),
+      );
+      $form['rulesets'][$rulesetid]['ops']['delete'] = array(
+        '#type' => 'submit',
+        //'#name' => 'ruleset-op-'.$rulesetid,
+        '#name' => 'ruleset-op['.$rulesetid.']',
+        '#value' => t('Delete Ruleset'),
+      );
+      $form['rulesets'][$rulesetid]['ops']['flush'] = array(
+        '#type' => 'submit',
+        '#name' => 'ruleset-op['.$rulesetid.']',
+        //'#name' => 'ruleset-op-'.$rulesetid,
+        '#value' => t('Flush Ruleset'),
+      );
+    }
+   
+
+  }
+  $form['newruleset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('New Ruleset'),
+    '#tree' => TRUE,
+  );
+  $form['newruleset']['name'] = array(
+    '#type' => 'textfield',
+    '#size' => '64',
+    '#title' => t('Name'),
+    '#default_value' => '',
+    '#description' => t('The name of an imagecache ruleset. It represents a series of actions to be performed when imagecache dynamically generates an image. This will also be used in the url for an image. Please no spaces.'),
+  );
+  $form['newruleset']['create'] = array(
+    '#type' => 'submit',
+    '#name' => 'ruleset-op',
+    '#value' => 'Create Ruleset',
+    '#weight' => 10,
+  );
+  
+
+  $output .= drupal_get_form('imagecache_admin',$form);
+  return $output;
+}
+
+function _imagecache_ruleset_update($id) {
+  global $form_values;
+  drupal_set_message('Updating Ruleset: '. $id);
+}
+function _imagecache_ruleset_delete($id) {
+  global $form_values;
+  drupal_set_message('Delete Ruleset: '. $id);
+}
+function _imagecache_ruleset_flush($id) {
+  global $form_values;
+  drupal_set_message('Flush Ruleset: '. $id);
+}
+
+function _imagecache_ruleset_create($name) {
+  db_query('INSERT INTO {imagecache_rulesets} (rulesetname) VALUES (\'%s\')', $name);
+}
+
+function imagecache_admin_submit($formid, $form) {
+  //debug_msg($_POST,'POST');
+
+  //create new rulesets
+  if ($form['newruleset']['ruleset-op'] == 'Create Ruleset') {
+    _imagecache_ruleset_create($form['newruleset']['name']);
+  }
+  
+}
+
+
+function _imagecache_ruleset_form($ruleset) {
+  debug_msg($ruleset);
+  $form = array(
+    '#type' => 'fieldset',
+    '#title' => t($ruleset['rulesetname']),
+  );
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Ruleset Name'),
+    '#description' => t('identifier for a collection of image processing actions in imagecache'),
+    '#default_value' => $ruleset['rulesetname'],
+  );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete Ruleset'),
+    '#name' => 'ruleset-op',
+    '#weight' => 10,
+  );
+
+  $actions = _imagecache_get_actions_by_rulesetid($ruleset['rulesetid']);
+  $form['actions'] = _imagecache_actions_form($actions);
+  return $form;
+}
+
+function _imagecache_actions_form($actions) { 
+  foreach($actions as $order => $action) {
+    $form[$order] = array(
+      '#type' => 'fieldset',
+      '#title' => $action['data']['function'],
+    );
+    switch($action['function']) {
+      case 'scale':
+      case 'resize':
+        $form[$order]['desc'] = array(
+          '#type' => 'markup',
+          '#value' => '(X: '. $action['x'] .', Y: '.$action['y'].')'
+        );
+        break;
+        
+      case 'crop':
+        $form[$order]['desc'] = array(
+          '#type' => 'markup',
+          '#value' => '(X: '. $action['x'] .', Y: '.$action['y'].', X Offset: '. $action['xoffset'] .' , Y Offset:'. $action['yoffset'] .')'
+        );
+        break;
+
+      case 'watermark':
+        //Think about this one...        
+    }
+
+    $form[$order]['up'] = array(
+      '#type' => 'button',
+      '#name' => 'up['.$order.']',
+      '#value' => 'up',
+    );
+    $form[$order]['down'] = array(
+      '#type' => 'button',
+      '#name' => 'down['.$order.']',
+      '#value' => 'down',
+    );
+    $form[$order]['delete'] = array(
+      '#type' => 'button',
+      '#name' => 'remove['.$order.']',
+      '#value' => 'delete',
+    );
+
+  }
+  $form['newaction'] = array(
+    '#type' => 'fieldset',  
+    '#title' => t('Add a New Action'),
+  );
+  $form['newaction']['scale']['#tree'] = TRUE;
+  $form['newaction']['scale']['#theme'] = 'imagecache_newaction_form';
+  $form['newaction']['scale']['function'] = array(
+    '#type' => 'value', 
+    '#value' => 'scale',
+  );
+  $form['newaction']['scale']['x'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('X:'),
+    '#default_value' => '',
+  );
+  $form['newaction']['scale']['y'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('Y:'),
+    '#default_value' => '',
+  );
+  $form['newaction']['scale']['add'] = array(
+    '#type' => 'button',
+    '#value' => 'Add',
+    '#name' => 'newscale',
+  );
+
+  //begin resize add form
+  $form['newaction']['resize']['#tree'] = TRUE;
+  $form['newaction']['resize']['#theme'] = 'imagecache_newaction_form';
+  $form['newaction']['resize']['function'] = array(
+    '#type' => 'value', 
+    '#value' => 'resize',
+  );
+  $form['newaction']['resize']['x'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('X'),
+    '#default_value' => '',
+  );
+  $form['newaction']['resize']['y'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('Y'),
+    '#default_value' => '',
+  );
+  $form['newaction']['resize']['add'] = array(
+    '#type' => 'button',
+    '#value' => 'Add',
+    '#name' => 'newscale',
+  );
+
+  //begin crop add form
+  $form['newaction']['crop']['#tree'] = TRUE;
+  $form['newaction']['crop']['#theme'] = 'imagecache_newaction_form';
+  $form['newaction']['crop']['function'] = array(
+    '#type' => 'value', 
+    '#value' => 'crop',
+  );
+  $form['newaction']['crop']['x'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('X'),
+    '#default_value' => '',
+  );
+  $form['newaction']['crop']['y'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('Y'),
+    '#default_value' => '',
+  );
+  $form['newaction']['crop']['xoffset'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('X Offset'),
+    '#default_value' => '',
+  );
+  $form['newaction']['crop']['yoffset'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('Y Offset'),
+    '#default_value' => '',
+  );
+  $form['newaction']['crop']['add'] = array(
+    '#type' => 'button',
+    '#value' => 'Add',
+    '#name' => 'newcrop',
+  );
+  return $form;
+}
+
+function imagecache_form_alter($formid, $form) {
+   //debug_msg($formid);
+   //debug_msg($form);
+
+}
+
+function theme_imagecache_newaction_form(&$form) {
+  //$header = array('function','arguments','action');
+  $header = array();
+  $row = array();
+  $row[] = $form['function']['#value'];
+  $row[] = form_render($form['x']);
+  $row[] = form_render($form['y']);
+  $row[] = form_render($form['xoffset']);
+  $row[] = form_render($form['yoffset']);
+  $row[] = form_render($form['add']);
+  $rows[] = $row;
+  $output = theme('table', $header, $rows, array('width' => '100%','class' => 'action-table'));
+  $output .= form_render($form);
+  return $output;
+}
+
+
+/**
+  * Theme an img tag for displaying the image.
+  */
+function theme_imagecache_display($node, $label, $url, $attributes) {
+  return '<img src="'. check_url($url) .'" alt="'. check_plain($node->title) .'" title="'. check_plain($node->title) .'" '. drupal_attributes($attributes) .' />';
+}
+
+/**
+ * Verify the image module and toolkit settings.
+ */
+function _imagecache_check_settings() {
+  // Sanity check : make sure we've got a working toolkit
+  if (!image_get_toolkit()) {
+    drupal_set_message(t('Make sure you have a working image toolkit installed and enabled, for more information see: %settings', array('%settings' => l(t('the settings page'), 'admin/settings'))), 'error');
+    return false;
+  }
+  return true;
+}
+
+function theme_imagecache_admin_title($element) {
+  return '<h2>'.$element['value'].'</h2>';
+}
+function _imagecache_ruleset_load($rulesetid) {
+  $result = db_query('SELECT rulesetid, rulesetname FROM {imagecache_rulesets} WHERE rulesetid = "%s"', $rulesetid);
+  $ruleset = db_fetch_array($result);
+  return $ruleset;
+}
+
+function imagecache_ruleset_delete($ruleset) {
+  $ruleset = _imagecache_ruleset_load($edit['rulesetid']);
+
+  if (user_access('administer imagecache rulesets')) {
+    $form['rulesetid'] = array('#type' => 'value', '#value' => $ruleset['rulesetid']);
+    $output = confirm_form(
+                  'imagecache_ruleset_delete_confirm', 
+                  $form,
+                  t('Are you sure you want to delete %title?', 
+                        array('%title' => theme('placeholder',$ruleset['rulesetname']))
+                  ),
+                  'admin/imagcache/'. $ruleset['rulesetid'], 
+                  t('This action cannot be undone.'),
+                  t('Delete'), 
+                  t('Cancel'));
+  }  
+
+  return $output;
+}
+
+/**
+ * Execute node deletion
+ */
+function imagecache_ruleset_delete_confirm_submit($form_id, $form_values) {
+  if ($form_values['confirm']) {
+    db_query('DELETE FROM {imagecache_actions} WHERE rulesetid = %d', $form_values['rulesetid']);
+    db_query('DELETE FROM {imagecache_rulesets} WHERE rulesetid = %d', $form_values['rulesetid']);
+    imagecache_ruleset_flush_confirm_submit('', array('confirm' => TRUE, 'rulesetid' => $form_values['rulesetid']));
+
+  }
+  return '';
+  drupal_set_destination('admin/imagecache');
+}
+
+function imagecache_ruleset_flush_confirm_submit($form_id, $form_values) {
+  if ($form_values['confirm']) {
+    $ruleset = _imagecache_ruleset_load($form_values['rulesetid']);
+      //delete tree at files/$ruleset['rulesetname'];
+  }
+}
+
