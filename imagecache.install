@@ -8,6 +8,7 @@ function imagecache_install() {
           );
 
   db_query('CREATE TABLE {imagecache_actions} (
+            actionid INT UNSIGNED NOT NULL PRIMARY KEY auto_increment,
             rulesetid INT UNSIGNED NOT NULL DEFAULT 0,
             weight INT NOT NULL DEFAULT 0,
             data VARCHAR(255) NOT NULL DEFAULT \'\');'
