@@ -4,11 +4,11 @@
   imagecache.module - dynamic image resizer and cache
 
   imagecache allows you to setup specialized identifiers for dynamic image processing
-  and caching. It abuses the rewrite rules that provide drupal's clean urls to provide
+  and caching. It abuses the rewrite rules used for drupal's clean urls to provide
   dynamic image generation. 
 
-  Eariler security flaws were overcome by using 'rulesets' similar to what the image.module does.
-  Only we don't fuss with the database, and creating data that we have to keep up with in drupal.
+  Eariler security flaws were overcome by using 'rulesets' similar to  image.module. 
+  We don't fuss with the database, and creating data that we have to keep up with in drupal.
   We do it on the fly and flush it when we want to, or when a ruleset changes.
   
   $get[q] = files/imagecache/<ruleset>/path
@@ -47,55 +47,64 @@ function imagecache_menu($may_cache) {
 
 
 function imagecache_cache() {
-  $generated = false;
+  $generated = FALSE;
   $args = func_get_args();
-  $destination = file_create_path() . '/imagecache/' . implode('/', $args);
-  if (file_check_directory(dirname($destination), 1)) {
-    $function = array_shift($args);
-		
-    switch ($function) {
-      case 'resize':
-        $width = array_shift($args);
-        $height = array_shift($args);
-        $source = file_create_path(implode('/', $args));
-        if (!is_file($source)) { drupal_set_message('$source does not exist'); }
-        if (image_resize($source, $destination, $width, $height)) $generated = true;
-        break;
+  $ruleset = array_shift($args);
 
-      case 'scale':
-        $width = array_shift($args);
-        $height = array_shift($args);
-        $source = file_create_path(implode('/', $args));
-        if (!is_file($source)) { drupal_set_message('$source does not exist'); }
-        if (image_scale($source, $destination, $width, $height)) {
-					$generated = true;
-				}
-				else {
-				}
-        break;
+  $ruleset = _imagecache_ruleset_load_by_name($ruleset);
+  $actions = _imagecache_actions_get_by_rulesetid($ruleset['rulesetid']);
+
+  $path = implode('/', $args); 
+  $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
+  $tmpdestination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/tmp'. $path;
+  debug_msg($path);
+
+  if (file_check_directory(dirname($destination), 1)) {
+    $source = file_create_path($path);
+    if (!is_file($source)) { drupal_set_message('$source does not exist'); 
+        //deliver not found image and exit.
+    }
+    else {
+      //check if file exists to prevent multiple apache children from trying to generate.
+
+      if (!is_file($tmpdestination)) {
+        $generated = TRUE;
+        file_copy($source, $tmpdestination);
     
-      case 'crop':
-        break;
-        
-   
-    }
-    if ($generated)  {
-			if (function_exists('mime_content_type')) {
- 				$mime = mime_content_type($destination);
-			} 
-			else {
-				$size = getimagesize($destination);
-				$mime = $size['mime'];
-			}
-			file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
-    }
+        foreach($actions as $action) {
+          switch($action['data']['function']) {
+            case 'resize':
+              if (!image_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+                $generated[$action['actionid']] = FALSE;
+              }
+              break;
+          
+            case 'scale':
+              if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+                $generated[$action['actionid']] = FALSE;
+              }
+              break;
+          
+          }
+        }
+        file_move($tmpdestination, $destination);
+      }
+
+      if ($generated)  {
+			  if (function_exists('mime_content_type')) {
+ 				  $mime = mime_content_type($destination);
+			  } 
+		  	else {
+				  $size = getimagesize($destination);
+				  $mime = $size['mime'];
+			  }
+			  file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
+      }
+    } 
   }
+  // could not check_dir / create dir. Error.
   else {
-		//drupal_set_message('could not create directory for cached image');
   }
-  //drupal_set_message("d: $destination; s: $source; f: $function; w: $width; h: $height");
-  //file_transfer($not_found_image);
-  //print theme('page','cached image');
 }
 
 function _imagecache_get_rulesets() {
@@ -249,6 +258,17 @@ function imagecache_admin_list() {
  */
 function _imagecache_ruleset_load($id) {
   $result = db_query('SELECT rulesetid, rulesetname FROM {imagecache_rulesets} WHERE rulesetid = %d', $id);
+  return db_fetch_array($result);
+}
+
+/** 
+ * load a ruleset by name
+ *  @param name
+ *    ruleset name
+ */
+
+function _imagecache_ruleset_load_by_name($name) {
+  $result = db_query('SELECT rulesetid, rulesetname FROM {imagecache_rulesets} WHERE rulesetname = \'%s\'', $name);
   return db_fetch_array($result);
 }
 
