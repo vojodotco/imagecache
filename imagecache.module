@@ -67,54 +67,74 @@ function imagecache_cache() {
   $actions = _imagecache_actions_get_by_rulesetid($ruleset['rulesetid']);
 
   $path = implode('/', $args); 
-  $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
-  $tmpdestination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/tmp'. $path;
-
-  if (file_check_directory(dirname($destination), 1)) {
-    $source = file_create_path($path);
-    if (!is_file($source)) { drupal_set_message('$source does not exist'); 
-        //deliver not found image and exit.
-    }
-    else {
-      //check if file exists to prevent multiple apache children from trying to generate.
-
-      if (!is_file($tmpdestination)) {
-        $generated = TRUE;
-        file_copy($source, $tmpdestination);
-    
-        foreach($actions as $action) {
-          switch($action['data']['function']) {
-            case 'resize':
-              if (!image_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
-                $generated[$action['actionid']] = FALSE;
-              }
-              break;
-          
-            case 'scale':
-              if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
-                $generated[$action['actionid']] = FALSE;
-              }
-              break;
-          
-          }
-        }
-        file_move($tmpdestination, $destination);
-      }
-
-      if ($generated)  {
-			  if (function_exists('mime_content_type')) {
- 				  $mime = mime_content_type($destination);
-			  } 
-		  	else {
-				  $size = getimagesize($destination);
-				  $mime = $size['mime'];
-			  }
-			  file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
-      }
-    } 
+  // verify that the source exists, if not exit. Maybe display a missing image.
+  $source = file_create_path($path);
+  if (!is_file($source)) { drupal_set_message('$source does not exist'); 
+     return 'source does not exist';
+    //deliver not found image and exit.
   }
-  // could not check_dir / create dir. Error.
+
+
+
+
+  $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
+  $tmpdestination = file_directory_temp() .'/'. str_replace(dirname($path), '', $path);
+  $dir = dirname($destination);
+  drupal_set_message('$tmpdestination: '. $tmpdestination);
+  drupal_set_message('$destination: '. $destination);
+  if(!file_check_directory($dir)) {
+    $folders = explode("/",$dir);
+    $path = array();
+   
+    foreach($folders as $folder) {
+      $tpath[] = $folder;
+      if(!file_check_directory(implode("/", $tpath))) {
+        mkdir(implode("/", $tpath));
+      }
+    }
+  }
+
+  if(!file_check_directory($dir)) {
+    return 'could not create destination: '. $destination;
+  }
+
+  //check if file exists to prevent multiple apache children from trying to generate.
+  if (!is_file($tmpdestination)) {
+    $generated = TRUE;
+    file_copy($source, $tmpdestination);
+
+    foreach($actions as $action) {
+      switch($action['data']['function']) {
+        case 'resize':
+          if (!image_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            $generated[$action['actionid']] = FALSE;
+          }
+          break;
+      
+        case 'scale':
+          if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            $generated[$action['actionid']] = FALSE;
+          }
+          break;
+        
+      }
+    }
+    file_move($tmpdestination, $destination);
+  }
+
+  if ($generated)  {
+    if (function_exists('mime_content_type')) {
+      $mime = mime_content_type($destination);
+  	} 
+		else {
+		  $size = getimagesize($destination);
+			$mime = $size['mime'];
+	  }
+		file_transfer($destination, array('Content-Type: ' . mime_header_encode($mime), 'Content-Length: ' . filesize($destination)));
+  }
   else {
+    //generation error.
+    //@todo watchdog an error.
   }
 }
 
