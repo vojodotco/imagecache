@@ -1,26 +1,8 @@
-**** USE  / DO NOT USE  imagecache.module v1.1 ****
-
-know Denial of Service holes. Use at your own risk.
-
-docs for v1.1...
- requires clean urls working and enabled.
-
- in you theme files create a image url using 
- files/imagecache/<function>/<arg 1>/<arg 2>/<path to image>
- where function is in_array('scale','resize').
- path is the normal path to the image file.
-
- A an image will be generated dynamically, written to the filesystem, and delivered to the 
-requesting browser. future requests for the same url will be caught by apaches rewrite rules
-and served directly from the filesystem.
-
-be warned this is a proof of concept and exposes your server to Denial Of Service attacks. 
-You would be best to wait on the next version before taking this module to production...
-
-**** ****** ****** ******* ***** ***
-ImageCache is currently undergoing rapid development. I'm working on a new UI that will be more like the 
-image.module for handling dynamic derivatives. 
-
+Imagecache is a dynamic image manipulation and cache tool.
+It allows you to create a namespace that corresponds to a set
+of image manipulation actions. It generates a derivative image the
+first time it is requested from a namespace until the namespace or
+the entire imagecache is flushed.
 
 
 

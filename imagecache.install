@@ -1,0 +1,19 @@
+<?php
+// $Id$
+
+function imagecache_install() {
+  db_query('CREATE TABLE {imagecache_rulesets} (
+            rulesetid INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            rulesetname VARCHAR(255) NOT NULL DEFAULT \'\' )'
+          );
+
+  db_query('CREATE TABLE {imagecache_actions} (
+            rulesetid INT UNSIGNED NOT NULL DEFAULT 0,
+            weight INT NOT NULL DEFAULT 0,
+            data VARCHAR(255) NOT NULL DEFAULT \'\');'
+          );
+}
+
+function imagecache_update_1() {
+  update_sql('ALTER TABLE {imagecache_actions} ADD COLUMN actionid INT UNSIGNED NOT NULL  primary key auto_increment');
+}
