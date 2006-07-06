@@ -15,6 +15,18 @@
 
 	@todo: improve image resizing, reduce distortion.
   @todo: add watermarking capabilities.
+  @todo: split action/handlers into their own little .inc files.
+  @todo: enforce permissions.
+
+
+  **
+    to add a new handler, 
+      add the button & fields in the _imagecache_actions_form
+      add a switch to add it in imagecache_admin_list
+      add handling code to imagecache_cache
+
+  **
+
 */
 
 function imagecache_help($section) {
@@ -57,7 +69,6 @@ function imagecache_cache() {
   $path = implode('/', $args); 
   $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
   $tmpdestination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/tmp'. $path;
-  debug_msg($path);
 
   if (file_check_directory(dirname($destination), 1)) {
     $source = file_create_path($path);
@@ -129,7 +140,6 @@ function _imagecache_actions_get_by_rulesetid($rulesetid) {
 function imagecache_admin_list() {
   // screw fapi. Its inability to handled nested submit buttons or any sort of additional data on a submit
   // button is frustrating.. So we're gonna do it ourself.
-  //debug_msg($_POST);
 
   if (is_array($_POST['ruleset-op'])) {
     foreach($_POST['ruleset-op'] as $rulesetid => $op) {
@@ -148,13 +158,25 @@ function imagecache_admin_list() {
           _imagecache_ruleset_flush($rulesetid);
           break;
         case t('Add Scale'):  
-          $width = check_plain($_POST['edit']['rulesets'][$rulesetid]['handlers']['newscale']['y']);
-          $height = check_plain($_POST['edit']['rulesets'][$rulesetid]['handlers']['newscale']['x']);
-          $action['data'] = array('function' => 'scale', 'width' => $width, 'height' => $height);
+          $action['data'] = array('function' => 'scale');
           $action['rulesetid'] = $rulesetid;
           $action['weight'] = 0; 
-
           _imagecache_action_create($action);
+          break;
+
+        case t('Add Resize'):  
+          $action['data'] = array('function' => 'resize');
+          $action['rulesetid'] = $rulesetid;
+          $action['weight'] = 0; 
+          _imagecache_action_create($action);
+          break;
+
+        case t('Add Crop'):
+          $action['data'] = array('function' => 'crop');
+          $action['rulesetid'] = $rulesetid;
+          $action['weight'] = 0; 
+          _imagecache_action_create($action);
+          break;
       }
     }
   }
@@ -172,7 +194,7 @@ function imagecache_admin_list() {
               $action['data'][$key] = check_plain($value);
             }
           }
-          debug_msg($action,'action b4 update');
+          //debug_msg($action,'action b4 update');
           _imagecache_action_update($action); 
           break;
         case t('Delete Action'):
@@ -344,7 +366,7 @@ function _imagecache_actions_form($rulesetid) {
   $actions = _imagecache_actions_get_by_rulesetid($rulesetid);
   if (count($actions)) {
     foreach($actions as $actionid => $action) {
-      debug_msg($action);
+      //debug_msg($action);
       $form[$actionid] = array (
         '#type' => 'fieldset',
         '#title' => t($action['data']['function']),
@@ -377,9 +399,25 @@ function _imagecache_actions_form($rulesetid) {
           break;
         
         case 'crop':
-          $form[$actionid]['desc'] = array(
-            '#type' => 'markup',
-            '#value' => '(height: '. $action['data']['height'] .', width: '.$action['data']['width'].', X Offset: '. $actioni['data']['xoffset'] .' , Y Offset:'. $action['data']['yoffset'] .')'
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
+          );
+          $form[$actionid]['data']['width'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Width'),
+            '#default_value' => $action['data']['width'],
+          );
+          $form[$actionid]['data']['xoffset'] = array(
+            '#type' => 'textfield',
+            '#title' => t('X Offset'),
+            '#default_value' => $action['data']['xoffset'],
+          );
+          $form[$actionid]['data']['yoffset'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Y Offset'),
+            '#default_value' => $action['data']['yoffset'],
           );
           break;
 
