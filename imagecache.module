@@ -49,7 +49,7 @@ function imagecache_menu($may_cache) {
                       'type' => MENU_CALLBACK
                );     
     $items[] = array( 'path' => 'admin/imagecache', 
-                      'title' => t('ImageCache'),
+                      'title' => t('imagecache'),
                       'access' => user_access('administer imagecache'),
                       'callback' => 'imagecache_admin_list',
                );
