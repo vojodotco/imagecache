@@ -75,8 +75,6 @@ function imagecache_cache() {
   }
 
 
-
-
   $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
   $tmpdestination = file_directory_temp() .'/'. str_replace(dirname($path), '', $path);
   $dir = dirname($destination);
@@ -351,9 +349,19 @@ function _imagecache_ruleset_delete($id) {
  *   a ruleset id.
  */
 function _imagecache_ruleset_flush($id) {
-  drupal_set_message('Flush Ruleset: '. $id);
-  $ruleset = _imagecache_ruleset_load($id);
-  unlink(file_create_path('imagecache\/'.$ruleset['rulesetname']));
+  if (user_access('imagecache flush')) {
+    drupal_set_message('Flush Ruleset: '. $id);
+    $ruleset = _imagecache_ruleset_load($id);
+    $rulesetdir = file_directory_path().'/imagecache/'.$ruleset['rulesetname'] .'/'. file_directory_path();
+    drupal_set_message('rulesetdir: '. $rulesetdir); 
+    $dir = opendir($rulesetdir);
+    while ($file = readdir($dir)) {
+      if ($file != '.' && $file != '..') {
+        unlink($rulesetdir .'/'. $file);
+      }
+    }
+    //unlink(file_directory_path().'/imagecache/'.$ruleset['rulesetname']);
+  }
 }
 
 function _imagecache_action_load($id) {
