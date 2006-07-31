@@ -78,8 +78,8 @@ function imagecache_cache() {
   $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
   $tmpdestination = file_directory_temp() .'/'. str_replace(dirname($path), '', $path);
   $dir = dirname($destination);
-  drupal_set_message('$tmpdestination: '. $tmpdestination);
-  drupal_set_message('$destination: '. $destination);
+  //drupal_set_message('$tmpdestination: '. $tmpdestination);
+  //drupal_set_message('$destination: '. $destination);
   if(!file_check_directory($dir)) {
     $folders = explode("/",$dir);
     $path = array();
