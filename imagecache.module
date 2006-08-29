@@ -70,8 +70,7 @@ function imagecache_cache() {
   // verify that the source exists, if not exit. Maybe display a missing image.
   $source = file_create_path($path);
   if (!is_file($source)) { 
-     drupal_set_message('$source does not exist'); 
-     return 'source does not exist';
+     return drupal_not_found();
      //@todo: Add a global not found image, and a not found
      //image per ruleset, and deliver here if the ruleset
      //is flagged to provide a not found image.
