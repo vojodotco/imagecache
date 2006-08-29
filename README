@@ -5,4 +5,15 @@ first time it is requested from a namespace until the namespace or
 the entire imagecache is flushed.
 
 
+Usage:
+goto  admin -> imagecache 
+create a ruleset,
+add some actions to yoru ruleset,
+
+add a 
+print theme('imagecache', $ruleset_namespace, $image['filepath'])
+
+
+
+
 

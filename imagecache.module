@@ -43,7 +43,7 @@ function imagecache_perm() {
 function imagecache_menu($may_cache) {
   $items = array();
   if ($may_cache) {
-    $items[] = array( 'path' => 'files/imagecache', 
+    $items[] = array( 'path' => file_directory_path() .'/imagecache', 
                       'callback' => 'imagecache_cache',
                       'access' => TRUE,
                       'type' => MENU_CALLBACK
@@ -69,14 +69,17 @@ function imagecache_cache() {
   $path = implode('/', $args); 
   // verify that the source exists, if not exit. Maybe display a missing image.
   $source = file_create_path($path);
-  if (!is_file($source)) { drupal_set_message('$source does not exist'); 
+  if (!is_file($source)) { 
+     drupal_set_message('$source does not exist'); 
      return 'source does not exist';
-    //deliver not found image and exit.
+     //@todo: Add a global not found image, and a not found
+     //image per ruleset, and deliver here if the ruleset
+     //is flagged to provide a not found image.
   }
 
 
   $destination = file_create_path() . '/imagecache/'. $ruleset['rulesetname'] .'/'. $path;
-  $tmpdestination = file_directory_temp() .'/'. str_replace(dirname($path), '', $path);
+  $tmpdestination = file_directory_temp() . str_replace(dirname($path), '', $path);
   $dir = dirname($destination);
   //drupal_set_message('$tmpdestination: '. $tmpdestination);
   //drupal_set_message('$destination: '. $destination);
@@ -118,6 +121,8 @@ function imagecache_cache() {
       }
     }
     file_move($tmpdestination, $destination);
+  } else {
+    $generated = TRUE;
   }
 
   if ($generated)  {
@@ -512,4 +517,8 @@ function _imagecache_check_settings() {
 
 function theme_imagecache_admin_title($element) {
   return '<h2>'.$element['value'].'</h2>';
+}
+
+function theme_imagecache($namespace, $path) {
+	return '<img src="/'. file_directory_path() .'/imagecache/'. $namespace .'/'. $path .'"></a>';
 }
