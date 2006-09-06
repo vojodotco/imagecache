@@ -116,7 +116,6 @@ function imagecache_cache() {
             $generated[$action['actionid']] = FALSE;
           }
           break;
-        
       }
     }
     file_move($tmpdestination, $destination);
@@ -140,11 +139,11 @@ function imagecache_cache() {
   }
 }
 
-function _imagecache_get_rulesets() {
+function _imagecache_get_presets() {
   $rulesets = array();
   $result = db_query('SELECT rulesetid, rulesetname FROM {imagecache_rulesets} ORDER BY rulesetname');
   while($row = db_fetch_array($result)) {
-    $rulesets[$row['rulesetid']] = $row;
+    $rulesets[$row['rulesetid']] = $row['rulesetname'];
   }
   return $rulesets;
 }
@@ -160,9 +159,6 @@ function _imagecache_actions_get_by_rulesetid($rulesetid) {
 }
 
 function imagecache_admin_list() {
-  // screw fapi. Its inability to handled nested submit buttons or any sort of additional data on a submit
-  // button is frustrating.. So we're gonna do it ourself.
-
   if (is_array($_POST['ruleset-op'])) {
     foreach($_POST['ruleset-op'] as $rulesetid => $op) {
       $rulesetid = check_plain($rulesetid);
@@ -226,72 +222,71 @@ function imagecache_admin_list() {
     }
   }
 
-  $rulesets = _imagecache_get_rulesets();
+  $presets = _imagecache_get_presets();
   drupal_set_title('Imagecache Administration');
-  $form['title'] = array('#type' => 'markup', '#value' => 'Rulesets', '#theme' => 'imagecache_admin_title');
+  $form['title'] = array('#type' => 'markup', '#value' => t('Imagecache Presets'), '#theme' => 'imagecache_admin_title');
   $form['rulesets']['#tree'] = TRUE;
-  if (count($rulesets)) {
-    foreach($rulesets as $rulesetid => $ruleset) {
-      $form['rulesets'][$rulesetid] = array(
+  if (count($presets)) {
+    foreach($presets as $presetid => $presetname) {
+      $form['presets'][$presetid] = array(
         '#type' => 'fieldset',
-        '#title' => t($ruleset['rulesetname']),
+        '#title' => t($presetname),
         '#collapsible' => TRUE,
       );
       
-      $form['rulesets'][$rulesetid]['name'] = array(
+      $form['presets'][$presetid]['name'] = array(
         '#type' => 'textfield',
-        '#title' => 'NameSpace',
-        '#default_value' => $ruleset['rulesetname'],
-        '#description' => t('string that will be used as an identifier in the url for this set of handlers. Final urls will look like http://example.com/files/imagecache/%namespace/&lt;path to orig&gt;', array('%namespace' => theme('placeholder',$ruleset['rulesetname']))),
+        '#title' => t('Preset Namespace'),
+        '#default_value' => $presetname,
+        '#description' => t('String that will be used as an identifier in the url for this set of handlers. Final urls will look like http://example.com/files/imagecache/%namespace/&lt;path to orig&gt;', array('%namespace' => theme('placeholder',$presetname))),
       );
-      $form['rulesets'][$rulesetid]['handlers'] = array (
+      $form['presets'][$presetid]['handlers'] = array (
         '#type' => 'fieldset',
         '#title' => t('image handlers'),
       );
      
-      $form['rulesets'][$rulesetid]['handlers']['#tree'] = FALSE;
-      $form['rulesets'][$rulesetid]['handlers'] = _imagecache_actions_form($ruleset['rulesetid']);
-      $form['rulesets'][$rulesetid]['ops']['#tree'] = FALSE;
-      $form['rulesets'][$rulesetid]['ops']['update'] = array(
+      $form['presets'][$presetid]['handlers']['#tree'] = FALSE;
+      $form['presets'][$presetid]['handlers'] = _imagecache_actions_form($presetid);
+      $form['presets'][$presetid]['ops']['#tree'] = FALSE;
+      $form['presets'][$presetid]['ops']['update'] = array(
         '#type' => 'submit',
-        '#name' => 'ruleset-op['.$rulesetid.']',
-        '#value' => t('Update Ruleset'),
+        '#name' => 'ruleset-op['.$presetid.']',
+        '#value' => t('Update Preset'),
       );
-      $form['rulesets'][$rulesetid]['ops']['delete'] = array(
+      $form['presets'][$presetid]['ops']['delete'] = array(
         '#type' => 'submit',
-        '#name' => 'ruleset-op['.$rulesetid.']',
-        '#value' => t('Delete Ruleset'),
+        '#name' => 'preset-op['. $presetid .']',
+        '#value' => t('Delete Preset'),
       );
-      $form['rulesets'][$rulesetid]['ops']['flush'] = array(
+      $form['presets'][$presetid]['ops']['flush'] = array(
         '#type' => 'submit',
-        '#name' => 'ruleset-op['.$rulesetid.']',
-        '#value' => t('Flush Ruleset'),
+        '#name' => 'preset-op['. $presetid .']',
+        '#value' => t('Flush Preset Images'),
       );
     }
    
 
   }
-  $form['newruleset'] = array(
+  $form['newpreset'] = array(
     '#type' => 'fieldset',
-    '#title' => t('New Ruleset'),
+    '#title' => t('New Preset'),
     '#tree' => TRUE,
   );
-  $form['newruleset']['name'] = array(
+  $form['newpreset']['name'] = array(
     '#type' => 'textfield',
     '#size' => '64',
-    '#title' => t('Name'),
+    '#title' => t('Preset Namespace'),
     '#default_value' => '',
-    '#description' => t('The name of an imagecache ruleset. It represents a series of actions to be performed when imagecache dynamically generates an image. This will also be used in the url for an image. Please no spaces.'),
+    '#description' => t('The namespace of an imagecache preset. It represents a series of actions to be performed when imagecache dynamically generates an image. This will also be used in the url for images. Please no spaces.'),
   );
-  $form['newruleset']['create'] = array(
+  $form['newpreset']['create'] = array(
     '#type' => 'submit',
-    '#name' => 'ruleset-op[new]',
-    '#value' => 'Create Ruleset',
+    '#name' => 'preset-op[new]',
+    '#value' => 'Create Preset',
     '#weight' => 10,
   );
-  
 
-  $output .= drupal_get_form('imagecache_admin',$form);
+  $output .= drupal_get_form('imagecache_admin', $form);
   return $output;
 }
 
@@ -519,5 +514,6 @@ function theme_imagecache_admin_title($element) {
 }
 
 function theme_imagecache($namespace, $path) {
-	return '<img src="/'. file_directory_path() .'/imagecache/'. $namespace .'/'. $path .'"></a>';
+  $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
+  return '<img src="'. $imagecache_path .'"></a>';
 }
