@@ -89,7 +89,10 @@ function imagecache_cache() {
     foreach($folders as $folder) {
       $tpath[] = $folder;
       if(!file_check_directory(implode("/", $tpath))) {
-        mkdir(implode("/", $tpath));
+        $p = implode("/", $tpath);
+        if (!file_exists($p)) {
+          mkdir($p);
+        }
       }
     }
   }
@@ -159,39 +162,40 @@ function _imagecache_actions_get_by_rulesetid($rulesetid) {
 }
 
 function imagecache_admin_list() {
-  if (is_array($_POST['ruleset-op'])) {
-    foreach($_POST['ruleset-op'] as $rulesetid => $op) {
-      $rulesetid = check_plain($rulesetid);
+  //drupal_set_message('<pre>'. print_r($_POST, TRUE) .'</pre>');
+  if (is_array($_POST['preset-op'])) {
+    foreach($_POST['preset-op'] as $presetid => $op) {
+      $presetid = check_plain($presetid);
       switch($op) {
-        case t('Create Ruleset'):  
-          _imagecache_ruleset_create(check_plain($_POST['edit']['newruleset']['name']));
+        case t('Create Preset'):  
+          _imagecache_ruleset_create(check_plain($_POST['edit']['newpreset']['name']));
           break;
-        case t('Update Ruleset'):  
-          _imagecache_ruleset_update($rulesetid, check_plain($_POST['edit']['rulesets'][$rulesetid]['name']));
+        case t('Update Preset'):  
+          _imagecache_ruleset_update($presetid, check_plain($_POST['edit']['presets'][$presetid]['name']));
           break;
-        case t('Delete Ruleset'):  
-          _imagecache_ruleset_delete($rulesetid);
+        case t('Delete Preset'):  
+          _imagecache_ruleset_delete($presetid);
           break;
-        case t('Flush Ruleset'):   
-          _imagecache_ruleset_flush($rulesetid);
+        case t('Flush Preset'):   
+          _imagecache_ruleset_flush($presetid);
           break;
         case t('Add Scale'):  
           $action['data'] = array('function' => 'scale');
-          $action['rulesetid'] = $rulesetid;
+          $action['rulesetid'] = $presetid;
           $action['weight'] = 0; 
           _imagecache_action_create($action);
           break;
 
         case t('Add Resize'):  
           $action['data'] = array('function' => 'resize');
-          $action['rulesetid'] = $rulesetid;
+          $action['rulesetid'] = $presetid;
           $action['weight'] = 0; 
           _imagecache_action_create($action);
           break;
 
         case t('Add Crop'):
           $action['data'] = array('function' => 'crop');
-          $action['rulesetid'] = $rulesetid;
+          $action['rulesetid'] = $presetid;
           $action['weight'] = 0; 
           _imagecache_action_create($action);
           break;
@@ -205,14 +209,15 @@ function imagecache_admin_list() {
       $action = _imagecache_action_load($actionid);
       switch($op) {
         case t('Update Action'):
-          $action['data'] = $_POST['edit']['rulesets'][$action['rulesetid']]['handlers'][$actionid]['data'];
-          $action['weight'] = $_POST['edit']['rulesets'][$action['rulesetid']]['handlers'][$actionid]['weight'];
+          $action['data'] = $_POST['edit']['presets'][$action['rulesetid']]['handlers'][$actionid]['data'];
+          $action['weight'] = $_POST['edit']['presets'][$action['rulesetid']]['handlers'][$actionid]['weight'];
           if (count($action['data'])) {
             foreach($action['data'] as $key => $value) {
               $action['data'][$key] = check_plain($value);
             }
           }
           //debug_msg($action,'action b4 update');
+          //drupal_set_message('<pre>'. print_r($action, TRUE) .'</pre>');
           _imagecache_action_update($action); 
           break;
         case t('Delete Action'):
@@ -225,7 +230,7 @@ function imagecache_admin_list() {
   $presets = _imagecache_get_presets();
   drupal_set_title('Imagecache Administration');
   $form['title'] = array('#type' => 'markup', '#value' => t('Imagecache Presets'), '#theme' => 'imagecache_admin_title');
-  $form['rulesets']['#tree'] = TRUE;
+  $form['presets']['#tree'] = TRUE;
   if (count($presets)) {
     foreach($presets as $presetid => $presetname) {
       $form['presets'][$presetid] = array(
@@ -250,7 +255,7 @@ function imagecache_admin_list() {
       $form['presets'][$presetid]['ops']['#tree'] = FALSE;
       $form['presets'][$presetid]['ops']['update'] = array(
         '#type' => 'submit',
-        '#name' => 'ruleset-op['.$presetid.']',
+        '#name' => 'preset-op['.$presetid.']',
         '#value' => t('Update Preset'),
       );
       $form['presets'][$presetid]['ops']['delete'] = array(
@@ -471,20 +476,20 @@ function _imagecache_actions_form($rulesetid) {
   $form['newaction']['scale'] = array(
     '#type' => 'submit',
     '#value' => 'Add Scale',
-    '#name' => 'ruleset-op['.$rulesetid .']',
+    '#name' => 'preset-op['.$rulesetid .']',
   );
 
   $form['newaction']['resize'] = array(
     '#type' => 'submit',
     '#value' => 'Add Resize',
-    '#name' => 'ruleset-op['.$rulesetid .']',
+    '#name' => 'preset-op['.$rulesetid .']',
   );
 
   //begin crop add form
   $form['newaction']['crop'] = array(
     '#type' => 'submit',
     '#value' => 'Add Crop',
-    '#name' => 'ruleset-op['.$rulesetid .']',
+    '#name' => 'preset-op['.$rulesetid .']',
   );
   return $form;
 }
