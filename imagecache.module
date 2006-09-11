@@ -424,28 +424,28 @@ function _imagecache_actions_form($rulesetid) {
       switch($action['data']['function']) {
         case 'scale':
         case 'resize':
-          $form[$actionid]['data']['height'] = array(
-            '#type' => 'textfield',
-            '#title' => t('Height'),
-            '#default_value' => $action['data']['height'],
-          );
           $form[$actionid]['data']['width'] = array(
             '#type' => 'textfield',
             '#title' => t('Width'),
             '#default_value' => $action['data']['width'],
+          );
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
           );
           break;
         
         case 'crop':
-          $form[$actionid]['data']['height'] = array(
-            '#type' => 'textfield',
-            '#title' => t('Height'),
-            '#default_value' => $action['data']['height'],
-          );
           $form[$actionid]['data']['width'] = array(
             '#type' => 'textfield',
             '#title' => t('Width'),
             '#default_value' => $action['data']['width'],
+          );
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
           );
           $form[$actionid]['data']['xoffset'] = array(
             '#type' => 'textfield',
