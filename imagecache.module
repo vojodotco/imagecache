@@ -119,6 +119,12 @@ function imagecache_cache() {
             $generated[$action['actionid']] = FALSE;
           }
           break;
+
+        case 'crop':
+          if (!image_crop($tmpdestination, $tmpdestination, $action['data']['xoffset'] , $action['data']['yoffset'],$action['data']['width'],$action['data']['height'])) {
+            $generated[$action['actionid']] = FALSE;
+          }
+          break;
       }
     }
     file_move($tmpdestination, $destination);
