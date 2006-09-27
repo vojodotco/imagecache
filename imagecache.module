@@ -24,7 +24,6 @@
       add the button & fields in the _imagecache_actions_form
       add a switch to add it in imagecache_admin_list
       add handling code to imagecache_cache
-
   **
 
 */
@@ -125,6 +124,12 @@ function imagecache_cache() {
             $generated[$action['actionid']] = FALSE;
           }
           break;
+    
+        case 'exact resize':
+          if (!imagecache_exact_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            $generated[$action['actionid']] = FALSE;
+          }
+          break;
       }
     }
     file_move($tmpdestination, $destination);
@@ -201,6 +206,13 @@ function imagecache_admin_list() {
 
         case t('Add Crop'):
           $action['data'] = array('function' => 'crop');
+          $action['rulesetid'] = $presetid;
+          $action['weight'] = 0; 
+          _imagecache_action_create($action);
+          break;
+
+       case t('Add Exact Resize'):
+          $action['data'] = array('function' => 'exact resize');
           $action['rulesetid'] = $presetid;
           $action['weight'] = 0; 
           _imagecache_action_create($action);
@@ -459,6 +471,19 @@ function _imagecache_actions_form($rulesetid) {
           );
           break;
 
+        case 'exact resize':
+          $form[$actionid]['data']['width'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Width'),
+            '#default_value' => $action['data']['width'],
+          );
+          $form[$actionid]['data']['height'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Height'),
+            '#default_value' => $action['data']['height'],
+          );
+          $form[$actionid]['description'] = t('Exact Resize crops and resizes an image to fit the destination aspect ratio. (See Image_exact.module)');
+          break;
         case 'watermark':
           //Think about this one...        
       }
@@ -527,4 +552,31 @@ function theme_imagecache_admin_title($element) {
 function theme_imagecache($namespace, $path) {
   $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
   return '<img src="'. $imagecache_path .'"></a>';
+}
+
+
+
+function imagecache_exact_resize($source, $destination, $width, $height) {
+  $source_info = image_get_info($source);
+  $source_ar = $source_info['width'] / $source_info['height'];
+  if ($source_info['width'] > $final_w && $source_info['height'] > $final_h) {
+    // only proceed if we've got a big enough source file... don't stretch a tiny one
+    $final_ar = $final_w / $final_h;
+    if($source_ar > $final_ar) { //Too wide!
+      $width = round($source_info['width'] / ($source_ar / $final_ar));
+      $x = round(($source_info['width'] - $width) / 2); // Start the crop at the halfway point to retain center
+      $y = 0;
+      $height = $source_info['height'];
+      image_crop($source,$destination,$x,$y,$width,$height);
+      // drupal_set_message("Crop: $x,$y,$width,$height",'message');
+    } elseif ($source_ar < $final_ar) { // Too tall!
+      $height = round($source_info['height'] * ($source_ar / $final_ar));
+      $y = round(($source_info['height'] - $height) / 2); //Start the crop at the halfway point to retain center
+      $x = 0;
+      $width = $source_info['width'];
+      image_crop($source,$destination,$x,$y,$width,$height);
+      // drupal_set_message("Crop: $x,$y,$width,$height",'message');
+    }
+  }
+  return image_resize($destination, $destination, $final_w, $final_h);
 }
