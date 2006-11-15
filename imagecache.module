@@ -382,7 +382,7 @@ function _imagecache_recursive_delete($path) {
 function _imagecache_action_create($action) {
   //debug_msg($action, 'action@create: ');
   $next_id = db_next_id('{imagecache_action}_actionid');
-  db_query('INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, %d, "%s")', $next_id, $action['presetid'], $action['weight'], serialize($action['data']));
+  db_query('INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, %d, \'%s\')', $next_id, $action['presetid'], $action['weight'], serialize($action['data']));
 }
 
 function _imagecache_action_update($action) {
