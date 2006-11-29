@@ -110,6 +110,9 @@ function imagecache_cache() {
           break;
       
         case 'scale':
+          // set width and height to impossible large values to allow scaling on a single dimension.
+          $action['data']['width'] = $action['data']['width'] ? $action['data']['width'] : 9999999;
+          $action['data']['height'] = $action['data']['height'] ? $action['data']['height'] : 9999999;
           if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
             watchdog('imagecache', t('Imagecache scale action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
           }
