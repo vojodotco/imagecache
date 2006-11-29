@@ -1,0 +1,3 @@
+; $Id$
+name = Image Cache
+description = Dynamic image manipulator and cache.
