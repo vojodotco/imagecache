@@ -28,11 +28,6 @@
 
 */
 
-function imagecache_help($section) {
-  switch($section) {
-    case 'admin/modules#description': return t('enable dynamic image manipulator');
-  }
-}
 
 function imagecache_perm() {
   return array('administer imagecache','flush imagecache');
@@ -47,10 +42,11 @@ function imagecache_menu($may_cache) {
                       'access' => TRUE,
                       'type' => MENU_CALLBACK
                );     
-    $items[] = array( 'path' => 'admin/imagecache', 
-                      'title' => t('imagecache'),
+    $items[] = array( 'path' => 'admin/settings/imagecache', 
+                      'title' => t('Image cache'),
                       'access' => user_access('administer imagecache'),
-                      'callback' => 'imagecache_admin_list',
+                      'callback' => 'drupal_get_form',
+                      'callback arguments' => array('imagecache_admin'),
                );
   }
   return $items;
@@ -166,7 +162,7 @@ function _imagecache_actions_get_by_presetid($presetid) {
   return $actions;
 }
 
-function imagecache_admin_list() {
+function imagecache_admin() {
   //drupal_set_message('<pre>'. print_r($_POST, TRUE) .'</pre>');
   
   drupal_set_title('Imagecache Administration');
@@ -180,7 +176,7 @@ function imagecache_admin_list() {
       '#type' => 'fieldset',
       '#title' => t($presetname),
       '#collapsible' => TRUE,
-      '#collapsed' => arg(3) != $presetid,
+      '#collapsed' => arg(4) != $presetid,
     );
     $form['presets'][$presetid]['name'] = array(
       '#type' => 'textfield',
@@ -231,7 +227,7 @@ function imagecache_admin_list() {
     '#value' => 'Create Preset',
     '#weight' => 10,
   );
-  return drupal_get_form('imagecache_admin', $form);
+  return $form;
 }
 
 function imagecache_admin_validate($form_id, $form_values) {
@@ -316,7 +312,7 @@ function _imagecache_preset_load_by_name($name) {
 function _imagecache_preset_create($name) {
   $next_id = db_next_id('{imagecache_preset}_presetid');
   db_query('INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, \'%s\')', $next_id, $name);
-  $_REQUEST['destination'] = 'admin/imagecache/preset/'.$next_id;
+  $_REQUEST['destination'] = 'admin/settings/imagecache/preset/'.$next_id;
 }
 
 /**
@@ -332,7 +328,7 @@ function _imagecache_preset_update($id, $name) {
   _imagecache_preset_flush($id);
   db_query('UPDATE {imagecache_preset} SET presetname =\'%s\' WHERE presetid = %d', $name, $id);
   drupal_set_message(t('Updated preset "%name" (ID: @id)', array('%name' => $name, '@id' => $id)));
-  $_REQUEST['destination'] = 'admin/imagecache/preset/'.$id;
+  $_REQUEST['destination'] = 'admin/settings/imagecache/preset/'.$id;
 }
 
 function _imagecache_preset_delete($id, $name) {
@@ -492,7 +488,7 @@ function theme_imagecache_display($node, $label, $url, $attributes) {
 function _imagecache_check_settings() {
   // Sanity check : make sure we've got a working toolkit
   if (!image_get_toolkit()) {
-    drupal_set_message(t('Make sure you have a working image toolkit installed and enabled, for more information see: %settings', array('%settings' => l(t('the settings page'), 'admin/settings'))), 'error');
+    drupal_set_message(t('Make sure you have a working image toolkit installed and enabled, for more information see: %settings', array('%settings' => l(t('Image toolkit settings'), 'admin/settings/image-toolkit'))), 'error');
     return false;
   }
   return true;
@@ -501,8 +497,8 @@ function _imagecache_check_settings() {
 function theme_imagecache_admin($form) {
   $output = '';
   $output .= '<p class="cvs-version">$Id$</p>';
-  $output .= '<h2>'.form_render($form['title']).'</h2>';
-  $output .= form_render($form);
+  $output .= '<h2>'.drupal_render($form['title']).'</h2>';
+  $output .= drupal_render($form);
   return $output;
 }
 

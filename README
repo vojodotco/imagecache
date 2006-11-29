@@ -6,7 +6,7 @@ the entire imagecache is flushed.
 
 
 Usage:
-goto  admin -> imagecache 
+goto  Administer -> Site Configuration -> Image cache 
 create a ruleset,
 add some actions to yoru ruleset,
 
