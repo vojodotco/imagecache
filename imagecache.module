@@ -505,9 +505,11 @@ function theme_imagecache_admin($form) {
   return $output;
 }
 
-function theme_imagecache($namespace, $path) {
+function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  $attributes = drupal_attributes($attributes);
   $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
-  return '<img src="'. $imagecache_path .'" />';
+  return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
+
 }
 
 /**
@@ -519,6 +521,6 @@ function imagecache_image_flush($path) {
   $presets = _imagecache_get_presets();
   foreach($presets as $presetid => $presetname) {
     $path = file_directory_path() .'/imagecache/'. $presetname .'/'. $path;
-    file_delete($preset_image);
+    file_delete($path);
   }
 }
