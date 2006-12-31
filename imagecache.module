@@ -520,7 +520,7 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
 function imagecache_image_flush($path) {
   $presets = _imagecache_get_presets();
   foreach($presets as $presetid => $presetname) {
-    $path = file_directory_path() .'/imagecache/'. $presetname .'/'. $path;
-    file_delete($path);
+    $ipath = file_directory_path() .'/imagecache/'. $presetname .'/'. $path;
+    file_delete($ipath);
   }
 }
