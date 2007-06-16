@@ -58,7 +58,10 @@ function imagecache_cache() {
   $args = func_get_args();
   $preset = array_shift($args);
 
-  $preset = _imagecache_preset_load_by_name($preset);
+  // exit if we do not match a preset.
+  if (!$preset = _imagecache_preset_load_by_name($preset)) {
+    exit;
+  }
   $actions = _imagecache_actions_get_by_presetid($preset['presetid']);
 
   $path = implode('/', $args); 
