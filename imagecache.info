@@ -1,3 +1,4 @@
 ; $Id$
-name = Image Cache
+name = Imagecache
 description = Dynamic image manipulator and cache.
+package = Image

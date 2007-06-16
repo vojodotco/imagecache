@@ -106,3 +106,23 @@ function imagecache_update_3() {
   }
   return $ret;
 }
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function imagecache_uninstall() {
+  db_query('DROP TABLE {imagecache_preset}');
+  db_query('DROP TABLE {imagecache_action}');
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("DELETE FROM {sequences} WHERE name = '{imagecache_action}_actionid'");
+      db_query("DELETE FROM {sequences} WHERE name = '{imagecache_action}_presetid'");
+      break;
+    case 'pgsql':
+      db_query('DROP SEQUENCE {imagecache_action}_actionid_seq');
+      db_query('DROP SEQUENCE {imagecache_preset}_presetid_seq');
+      break;
+  }
+}

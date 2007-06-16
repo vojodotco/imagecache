@@ -11,7 +11,8 @@ create a ruleset,
 add some actions to yoru ruleset,
 
 add a 
-print theme('imagecache', $ruleset_namespace, $image['filepath'])
+print theme('imagecache', $ruleset_namespace, $image['filepath'], $alt, $title, $attributes)
+to your tpl.php file where you would like the image to appear, where $alt, $title and $attributes are optional parameters.
 
 
 
