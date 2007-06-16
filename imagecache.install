@@ -15,7 +15,7 @@ function imagecache_install() {
             actionid INT UNSIGNED NOT NULL PRIMARY KEY,
             presetid INT UNSIGNED NOT NULL DEFAULT 0,
             weight INT NOT NULL DEFAULT 0,
-            data TEXT NOT NULL DEFAULT \'\')
+            data TEXT NOT NULL)
             /*!40100 DEFAULT CHARACTER SET utf8 */'
       );
       break;
