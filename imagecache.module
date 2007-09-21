@@ -46,7 +46,7 @@ function imagecache_menu($may_cache) {
       'callback' => 'imagecache_cache',
       'access' => TRUE,
       'type' => MENU_CALLBACK
-    );     
+    );
     $items[] = array(
       'path' => 'admin/settings/imagecache',
       'title' => t('Image cache'),
@@ -110,7 +110,6 @@ function imagecache_requirements($phase) {
       } 
     }
   }
-
   return $requirements;
 }
 
@@ -182,13 +181,14 @@ function imagecache_cache() {
             watchdog('imagecache', t('Imagecache resize action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
           }
           break;
-        case 'scale':
-          if ($action['data']['fit'] == 'outside' && $action['data']['width'] && $action['data']['height']) {
-            $ratio = $size[0]/$size[1];
-            $new_ratio = $action['data']['width']/$action['data']['height'];
-            $action['data']['width'] = $ratio > $new_ratio ? 0 : $action['data']['width'];
-            $action['data']['height'] = $ratio < $new_ratio ? 0 : $action['data']['height'];
+
+        case 'scale and crop':
+          if (!image_scale_and_crop($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
+            watchdog('imagecache', t('Imagecache scale and crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
           }
+          break;
+
+        case 'scale':
           // Set impossibly large values if the width and height aren't set.
           $action['data']['width'] = $action['data']['width'] ? $action['data']['width'] : 9999999;
           $action['data']['height'] = $action['data']['height'] ? $action['data']['height'] : 9999999;
@@ -196,6 +196,7 @@ function imagecache_cache() {
             watchdog('imagecache', t('Imagecache scale action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
           }
           break;
+
         case 'crop':
           if (!image_crop($tmpdestination, $tmpdestination, $action['data']['xoffset'], $action['data']['yoffset'], $action['data']['width'], $action['data']['height'])) {
             watchdog('imagecache', t('Imagecache crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
@@ -619,21 +620,14 @@ function _imagecache_actions_form($presetid) {
       '#default_value' => $action['weight'],
     );
 
+/*    $helptext = array();
+    $helptext['inside'] = t('<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width.');
+    $helptext['outside'] = t('<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square.');
+    $description = '<ul><li>'. implode('</li><li>', $helptext) .'</li><ul>';*/
+
     switch ($action['data']['function']) {
       case 'scale':
-        $helptext = array();
-        $helptext['inside'] = t('<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width.');
-        $helptext['outside'] = t('<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square.');
-        $description = '<ul><li>'. implode('</li><li>', $helptext) .'</li><ul>';
-
-        $form[$actionid]['data']['fit'] = array(
-          '#type' => 'select',
-          '#title' => t('Scale to fit'),
-          '#options' => array('inside' => t('Inside dimensions'), 'outside' => t('Outside dimensions')),
-          '#default_value' => $action['data']['fit'],
-          '#weight' => 1,
-          '#description' => $description,
-        );
+      case 'scale and crop':
       case 'resize':
         $form[$actionid]['data']['width'] = array(
           '#type' => 'textfield',
@@ -684,14 +678,15 @@ function _imagecache_actions_form($presetid) {
   }
 
   $helptext = array();
-  $helptext['scale']  = t('<strong>Scale</strong>: Resize an image maintaining the original aspect-ratio (only one value necessary).');
-  $helptext['resize'] = t('<strong>Resize</strong>: Resize an image to an exact set of dimensions, ignoring aspect ratio.');
+  $helptext['scale']  = t('<strong>Scale</strong>: Resize an image to fit inside the target size, maintaining the original aspect-ratio.');
+  $helptext['scale and crop']  = t('<strong>Scale and crop</strong>: Resize an image to the exact target size, maintaining the original aspect-ratio and cropping off the sides to fit.');
+  $helptext['resize'] = t('<strong>Resize</strong>: Resize an image to the exact target size, ignoring aspect ratio.');
   $helptext['crop']   = t('<strong>Crop</strong>: Crop an image to the rectangle specified by the given offsets and dimensions.');
   $description = '<ul><li>'. implode('</li><li>', $helptext) .'</li><ul>';
 
   $form['newaction'] = array(
     '#type' => 'select',
-    '#options' => array('' => t('select...'), 'scale' => t('Scale'), 'resize' => t('Resize'), 'crop' => t('Crop')),
+    '#options' => array('' => t('select...'), 'scale' => t('Scale'), 'scale and crop' => t('Scale and crop'), 'resize' => t('Resize'), 'crop' => t('Crop')),
     '#title' => t('Add a new action'),
     '#description' => $description,
   );
@@ -756,3 +751,30 @@ function imagecache_image_flush($path) {
     file_delete($ipath);
   }
 }
+
+if (!function_exists('image_scale_and_crop')) {
+  /**
+   * Scales an image to the given width and height by scaling and cropping.
+   *
+   * The resulting image always has the exact target dimensions.
+   *
+   * @param $source         The file path of the source image
+   * @param $destination    The file path of the destination image
+   * @param $width          The target width
+   * @param $height         The target height
+   *
+   * @return True or FALSE, based on success
+   */
+  function image_scale_and_crop($source, $destination, $width, $height) {
+    $info = image_get_info($source);
+
+    $scale = max($width / $info['width'], $height / $info['height']);
+    $x = round(($info['width'] * $scale - $width) / 2);
+    $y = round(($info['height'] * $scale - $height) / 2);
+
+    if (image_toolkit_invoke('resize', array($source, $destination, $info['width'] * $scale, $info['height'] * $scale))) {
+      return image_toolkit_invoke('crop', array($destination, $destination, $x, $y, $width, $height));
+    }
+  }
+}
+
