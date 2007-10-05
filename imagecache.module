@@ -32,7 +32,15 @@
  * Implementation of hook_perm().
  */
 function imagecache_perm() {
-  return array('administer imagecache', 'flush imagecache');
+  $presets = _imagecache_get_presets();
+
+  $perms =  array('administer imagecache', 'flush imagecache');
+  if ($presets = _imagecache_get_presets()) {
+    foreach($presets as $preset_id => $preset_name) {
+      $perms[] =  'view imagecache '. $preset_name;
+    }
+  }
+  return $perms;
 }
 
 /**
@@ -41,12 +49,24 @@ function imagecache_perm() {
 function imagecache_menu($may_cache) {
   $items = array();
   if ($may_cache) {
+
+    // standard imagecache callback.
     $items[] = array(
       'path' => file_directory_path() .'/imagecache', 
       'callback' => 'imagecache_cache',
       'access' => TRUE,
       'type' => MENU_CALLBACK
     );
+
+    // private downloads imagecache callback 
+    $items[] = array( 
+      'path' => 'system/files/imagecache',
+      'callback' => 'imagecache_cache_private',
+      'access' => TRUE,
+      'type' => MENU_CALLBACK
+    );     
+
+    // settings form.
     $items[] = array(
       'path' => 'admin/settings/imagecache',
       'title' => t('Image cache'),
@@ -87,15 +107,6 @@ function imagecache_requirements($phase) {
         'description' => $t('Imagecache requires an imagetoolkit such as <a href="http://php.net/gd">GD2</a> or <a href="http://www.imagemagick.org">Imagemagick</a> be installed on your server.'),
       ); 
     }
-    // Check for public files.
-    if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
-      $requirements['file_system'] = array(
-        'title' => $t('File Download Method'),
-        'value' => $t('Private Downloads'),
-        'severity' => REQUIREMENT_ERROR,
-        'description' => $t('Imagecache will not operate properly using Private Files. Please enable <a href="!url">Public File Transfer</a>.', array('!url' => url('admin/settings/file-system'))),
-      ); 
-    }
     // Check for JPEG/PNG/GIF support.
     if ('gd' == image_get_toolkit()) {
       foreach (array('gif', 'jpeg', 'png') as $format) {
@@ -113,131 +124,212 @@ function imagecache_requirements($phase) {
   return $requirements;
 }
 
+/** 
+ * callback for handling public files imagecache requests.
+ */
 function imagecache_cache() {
-  $generated = FALSE;
   $args = func_get_args();
-  $preset = array_shift($args);
+  $preset = check_plain(array_shift($args));
+  $path = implode('/', $args);
+  _imagecache_cache($preset, $path);
+}
 
-  $preset_id = _imagecache_preset_load_by_name($preset);
-  // Exit if preset is not found, a small performance and sec fix.
-  if (!$preset_id) {
+/**
+ * callback for handling private files imagecache requests
+ */
+function imagecache_cache_private() {
+  $args = func_get_args();
+  $preset = check_plain(array_shift($args));
+  $source = implode('/', $args);
+
+  if (user_access('view imagecache '. $preset)) {
+    _imagecache_cache($preset, $source);
+  } 
+  else {
+    // if there is a 40333mage uploaded for the preset display it.
+    $accesspath = file_create_path('imagecache/'. $preset .'.403.png');
+    if (file_exists($accesspath)) {
+      imagecache_transfer($accesspath);
+      exit;
+    }
+    header('HTTP/1.0 403 Forbidden');
     exit;
   }
-  $actions = _imagecache_actions_get_by_presetid($preset_id);
+}
 
-  $path = implode('/', $args); 
-  // Verify that the source exists, if not exit. Maybe display a missing image.
-  $source = file_create_path($path);
-  if (!is_file($source)) {
-     return drupal_not_found();
-     // @todo: Add a global not found image, and a not found image per preset,
-     // and deliver here if the preset is flagged to provide a not found image.
+/**
+ * handle request validation and responses to imagecache requests. 
+ */
+function _imagecache_cache($preset, $path) {
+
+  if (!$preset_id = _imagecache_preset_load_by_name($preset)) {
+    // send a 404 if we dont' know of a preset. 
+    header("HTTP/1.0 404 Not Found");
+    exit;
+  }
+  $src = file_create_path($path);
+  if (!is_file($src)) {
+    // if there is a 404 image uploaded for the preset display it.
+    $notfoundpath = file_create_path('imagecache/'. $preset .'.404.png');
+    if (file_exists($notfoundpath)) {
+      imagecache_transfer($notfoundpath);
+      exit;
+    }
+    // otherwise send a 404.
+    header("HTTP/1.0 404 Not Found");
+    exit;
   }
 
-  $destination = file_create_path() .'/imagecache/'. $preset .'/'. $path;
+  // remove file_directory paths from imagecache images.
+  $dirpath = file_directory_path();
+  $dirlen = strlen($dirpath);
+  if (substr($path, 0, $dirlen + 1) == $dirpath .'/') {
+    $path = substr($path, $dirlen + 1);
+  }
+ 
+  $dst = file_create_path() .'/imagecache/'. $preset .'/'. $path; 
 
-  // Prepend presetname to tmp file name to prevent namespace clashes when
-  // multiple presets for the same image are called in rapid succession.
-  $tmpdestination = file_directory_temp() .'/'. $preset . str_replace(dirname($path) .'/', '', $path);
+  $tmp = file_directory_temp() .'/'. $preset . str_replace(dirname($src) .'/', '', $src);
+  if (file_exists($tmp)) {
+    watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $tmp)), WATCHDOG_NOTICE);
+    // send a response code that will make the browser wait and reload in a 1/2 sec. 
+    //header()
+    exit;
+  }
 
-  $dir = dirname($destination);
+  $actions =  _imagecache_actions_get_by_presetid($preset_id);
+ 
+  // check if deriv exists... (file was created between apaches request handler and reaching this code)
+  // otherwise try to create the derivative. 
+  if (!file_exists($dst) && !imagecache_build_derivative($actions, $src, $dst, $tmp)) {
+    // Generate an error if image could not generate.
+    watchdog('imagecache', t('Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset['presetname'])), WATCHDOG_ERROR);
+    header("HTTP/1.0 500 Internal Server Error");
+    // remove lock file on error.
+    unlink($tmp);
+    exit;
+  } 
+  imagecache_transfer($dst);
+}
+
+/**
+ * helper function to transfer files from imagecache. Determines mime type and sets a last modified header.
+ * @param $path path to file to be transferred.
+ * @return <exit>
+ */
+
+function imagecache_transfer($path) {
+  if (function_exists('mime_content_type')) {
+       $mime = mime_content_type($path);
+  }
+  else {
+    $size = getimagesize($path);
+    $mime = $size['mime'];
+  }
+  $headers = array('Content-Type: '. mime_header_encode($mime));
+  if ($fileinfo = stat($path)) {
+    $headers[] = 'Last-Modified: '. gmdate('D, d M Y H:i:s', $fileinfo[9]) .' GMT';
+  }
+  file_transfer($path, $headers);
+  exit;
+}
+
+
+/**
+ * build an image cache derivative
+ * 
+ * @param $actions, array of imagecache actions.
+ * @param $source, source file.
+ * @param $dest, $destination file.
+ * @return TRUE - derivative generated, FALSE - no derivative generated, NULL - derivative being generated
+ */
+function imagecache_build_derivative($actions, $src, $dst, $tmp) {
+  // Copy src to tmp. We use the existence of tmp as a lock.
+  if (!file_copy($src, $tmp)) {
+    // can't copy source to temp... ack..
+    watchdog('imagecache', t('Could not create temporary file: %path', array('%path' => $tmp)), WATCHDOG_ERROR);
+    return FALSE;
+  }
+
+  // get the folder for the final location of this preset...
+  $dir = dirname($dst);
 
   // Build the destination folder tree if it doesn't already exists.
   if (!file_check_directory($dir)) {
     $folders = explode("/", $dir);
 
     foreach ($folders as $folder) {
-      $tpath[] = $folder;
-      $checkpath = implode("/", $tpath);
-      if (!file_check_directory($checkpath)) {
-        $p = implode("/", $tpath);
-        if (!file_exists($p)) {
-          mkdir($p);
+      $dirs[] = $folder;
+      $path = implode("/", $dirs);
+      if (is_dir($path)) {
+        continue;
+      }
+      if (is_file($path)) {
+        watchdog('imagecache', t('file exists where we would like a directory: %path', array('%path' => $path)), WATCHDOG_ERROR);
+        return FALSE;
+      } 
+      if (!@mkdir($path)) {
+        watchdog('imagecache', t('Could not create destination: %dir halted at: %path', array('%dir' => $dir, '%path' => $path)), WATCHDOG_ERROR);
+        return FALSE;
+      }
+    }
+  }
+
+  foreach ($actions as $action) {
+    $size = getimagesize($tmp);
+    $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
+    $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
+    foreach ($action['data'] as $key => $value) {
+      $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
+    }
+    switch ($action['data']['function']) {
+      case 'resize':
+        if (!image_resize($tmp, $tmp, $action['data']['width'], $action['data']['height'])) {
+          watchdog('imagecache', t('Imagecache resize action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
         }
-      }
+        break;
+
+      case 'scale and crop':
+        if (!image_scale_and_crop($tmp, $tmp, $action['data']['width'], $action['data']['height'])) {
+          watchdog('imagecache', t('Imagecache scale and crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+        }
+        break;
+
+      case 'scale':
+        // Set impossibly large values if the width and height aren't set.
+        $action['data']['width'] = $action['data']['width'] ? $action['data']['width'] : 9999999;
+        $action['data']['height'] = $action['data']['height'] ? $action['data']['height'] : 9999999;
+        if (!image_scale($tmp, $tmp, $action['data']['width'], $action['data']['height'])) {
+          watchdog('imagecache', t('Imagecache scale action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+        }
+        break;
+
+      case 'crop':
+        if (!image_crop($tmp, $tmp, $action['data']['xoffset'], $action['data']['yoffset'], $action['data']['width'], $action['data']['height'])) {
+          watchdog('imagecache', t('Imagecache crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
+        }
+        break;
     }
   }
-
-  if (!file_check_directory($dir)) {
-    watchdog('imagecache', t('Could not create destination: %dir', array('%dir' => $destination)), WATCHDOG_ERROR);
-    return;
-  }
-
-  // Check if file exists to prevent multiple apache children from trying to generate.
-  if (!is_file($tmpdestination)) {
-    $generated = TRUE;
-    file_copy($source, $tmpdestination);
-
-    foreach ($actions as $action) {
-      $size = getimagesize($tmpdestination);
-      $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
-      $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
-      foreach ($action['data'] as $key => $value) {
-        $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
-      }
-      switch ($action['data']['function']) {
-        case 'resize':
-          if (!image_resize($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
-            watchdog('imagecache', t('Imagecache resize action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
-          }
-          break;
-
-        case 'scale and crop':
-          if (!image_scale_and_crop($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
-            watchdog('imagecache', t('Imagecache scale and crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
-          }
-          break;
-
-        case 'scale':
-          // Set impossibly large values if the width and height aren't set.
-          $action['data']['width'] = $action['data']['width'] ? $action['data']['width'] : 9999999;
-          $action['data']['height'] = $action['data']['height'] ? $action['data']['height'] : 9999999;
-          if (!image_scale($tmpdestination, $tmpdestination, $action['data']['width'], $action['data']['height'])) {
-            watchdog('imagecache', t('Imagecache scale action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
-          }
-          break;
-
-        case 'crop':
-          if (!image_crop($tmpdestination, $tmpdestination, $action['data']['xoffset'], $action['data']['yoffset'], $action['data']['width'], $action['data']['height'])) {
-            watchdog('imagecache', t('Imagecache crop action ID %id failed.', array('%id' => $action['actionid'])), WATCHDOG_ERROR);
-          }
-          break;
-      }
-    }
-    file_move($tmpdestination, $destination);
-  }
-  else {
-    $generated = TRUE;
-  }
-
-  if ($generated)  {
-    if (function_exists('mime_content_type')) {
-      $mime = mime_content_type($destination);
-    }
-    else {
-      $size = getimagesize($destination);
-      $mime = $size['mime'];
-    }
-    file_transfer($destination, array('Content-Type: '. mime_header_encode($mime), 'Content-Length: '. filesize($destination)));
-  }
-  else {
-    // Generate an error if image could not generate.
-    watchdog('imagecache', t('There were problems generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset['presetname'])), WATCHDOG_ERROR);
-  }
+  return file_move($tmp, $dst);
 }
+
+  
+
+
 
 /**
  * Implementation of hook_field_formatter_info().
  */
 function imagecache_field_formatter_info() {
-  $rules = _imagecache_get_presets();
-  foreach ($rules as $ruleid => $rulename) {
-    $formatters[$rulename] = array(
-      'label' => $rulename,
+  $presets = _imagecache_get_presets();
+  foreach ($presets as $preset_id => $preset_name) {
+    $formatters[$preset_name] = array(
+      'label' => $preset_name,
       'field types' => array('image'),
     );
-    $formatters[$rulename .'_linked'] = array(
-      'label' => $rulename .' as link',
+    $formatters[$preset_name .'_linked'] = array(
+      'label' => $preset_name .' as link',
       'field types' => array('image'),
     );
   }
@@ -735,6 +827,14 @@ function theme_imagecache_formatter($field, $item, $formatter) {
 
 function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
   $attributes = drupal_attributes($attributes);
+
+  // remove file directory path from urls..
+  $dirpath = file_directory_path();
+  $dirlen = strlen($dirpath);
+  if (substr($path, 0, $dirlen + 1) == $dirpath .'/') {
+    $path = substr($path, $dirlen + 1);
+  }
+
   $imagecache_path = file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
   return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
