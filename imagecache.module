@@ -115,6 +115,39 @@ function imagecache_requirements($phase) {
   return $requirements;
 }
 
+
+/**
+ * Return a URL that points to the location of a derivative of the
+ * original image at @p $path, transformed with the given @p $preset.
+ */
+function imagecache_create_url($preset, $path) {
+  $path = _imagecache_strip_file_directory($path);
+  return file_create_url(file_directory_path() .'/imagecache/'. $preset .'/'. $path);
+}
+
+/**
+ * Return a file system location that points to the location of a derivative
+ * of the original image at @p $path, transformed with the given @p $preset.
+ * Keep in mind that the image might not yet exist and won't be created.
+ */
+function imagecache_create_path($preset, $path) {
+  $path = _imagecache_strip_file_directory($path);
+  return file_create_path() .'/imagecache/'. $preset .'/'. $path;
+}
+
+/**
+ * Remove a possible leading file directory path from the given path.
+ */
+function _imagecache_strip_file_directory($path) {
+  $dirpath = file_directory_path();
+  $dirlen = strlen($dirpath);
+  if (substr($path, 0, $dirlen + 1) == $dirpath .'/') {
+    $path = substr($path, $dirlen + 1);
+  }
+  return $path;
+}
+
+
 /** 
  * callback for handling public files imagecache requests.
  */
@@ -171,14 +204,7 @@ function _imagecache_cache($preset, $path) {
     exit;
   }
 
-  // remove file_directory paths from imagecache images.
-  $dirpath = file_directory_path();
-  $dirlen = strlen($dirpath);
-  if (substr($path, 0, $dirlen + 1) == $dirpath .'/') {
-    $path = substr($path, $dirlen + 1);
-  }
- 
-  $dst = file_create_path() .'/imagecache/'. $preset .'/'. $path; 
+  $dst = imagecache_create_path($preset, $path);
 
   $tmp = file_directory_temp() .'/'. $preset . str_replace(dirname($src) .'/', '', $src);
   if (file_exists($tmp)) {
@@ -819,14 +845,7 @@ function theme_imagecache_formatter($field, $item, $formatter) {
 function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
   $attributes = drupal_attributes($attributes);
 
-  // remove file directory path from urls..
-  $dirpath = file_directory_path();
-  $dirlen = strlen($dirpath);
-  if (substr($path, 0, $dirlen + 1) == $dirpath .'/') {
-    $path = substr($path, $dirlen + 1);
-  }
-
-  $imagecache_path = file_create_url(file_directory_path() .'/imagecache/'. $namespace .'/'. $path);
+  $imagecache_path = imagecache_create_url($namespace, $path);
   return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
 
