@@ -5,34 +5,38 @@ function imagecache_install() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
-      $ret1 = db_query('CREATE TABLE {imagecache_preset} (
+      $ret1 = db_query("CREATE TABLE {imagecache_preset} (
             presetid INT UNSIGNED NOT NULL PRIMARY KEY,
-            presetname VARCHAR(255) NOT NULL DEFAULT \'\' )
-            /*!40100 DEFAULT CHARACTER SET utf8 */'
-      );
+            presetname VARCHAR(255) NOT NULL DEFAULT '' )
+            /*!40100 DEFAULT CHARACTER SET utf8 */
+      ");
 
-      $ret2 = db_query('CREATE TABLE {imagecache_action} (
+      $ret2 = db_query("CREATE TABLE {imagecache_action} (
             actionid INT UNSIGNED NOT NULL PRIMARY KEY,
             presetid INT UNSIGNED NOT NULL DEFAULT 0,
             weight INT NOT NULL DEFAULT 0,
+            module varchar(255) not null default '',
+            action varchar(255) not null default '',
             data TEXT NOT NULL)
-            /*!40100 DEFAULT CHARACTER SET utf8 */'
-      );
+            /*!40100 DEFAULT CHARACTER SET utf8 */
+      ");
       break;
 
     case 'pgsql':
-      $ret1 = db_query('CREATE TABLE {imagecache_preset} (
+      $ret1 = db_query("CREATE TABLE {imagecache_preset} (
             presetid INTEGER NOT NULL CHECK (presetid > 0),
-            presetname VARCHAR(255) NOT NULL DEFAULT \'\',
-            PRIMARY KEY (presetid));'
-      );
-      $ret2 = db_query('CREATE TABLE {imagecache_action} (
+            presetname VARCHAR(255) NOT NULL DEFAULT '',
+            PRIMARY KEY (presetid));
+      ");
+      $ret2 = db_query("CREATE TABLE {imagecache_action} (
             actionid INTEGER NOT NULL CHECK (actionid > 0),
             presetid INTEGER NOT NULL DEFAULT 0,
             weight INTEGER NOT NULL DEFAULT 0,
-            data TEXT NOT NULL DEFAULT \'\',
-            PRIMARY KEY (actionid));'
-      );
+            module varchar(255) not null default '',
+            action varchar(255) not null default '',
+            data TEXT NOT NULL DEFAULT '',
+            PRIMARY KEY (actionid));
+      ");
       db_query("CREATE SEQUENCE imagecache_preset_presetid_seq INCREMENT 1 START 1;");
       db_query("CREATE SEQUENCE imagecache_action_actionid_seq INCREMENT 1 START 1;");
       break;
@@ -106,6 +110,50 @@ function imagecache_update_3() {
   }
   return $ret;
 }
+
+function imagecache_update_4() {
+  $ret = array();
+
+   // add action column to the imagecache_action table just becuase serialization bugs me.
+   switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {imagecache_action} ADD COLUMN action varchar(255) not null default '' after weight");
+    case 'pgsql':
+      // @todo: pgsql updates.
+      break;
+  }
+
+  // unserialize what we can.
+  $result = db_query("SELECT * FROM {imagecache_action}");
+  while($row = db_fetch_array($result)) {
+    $data = unserialize($row['data']);
+    // Keep scale and crop and the old scale function seperate... I don't really want to break BC with 
+    // the 2.x update. We'll deprecate this version.
+    $function = $data['function'];
+    unset($data['function']);
+    $data = serialize($data);
+
+    // Rename scale and crop for any people who upgraded early...
+    if ($function == 'scale and crop') {
+      $function = 'scale_and_crop';
+    }
+    // Keep scale and crop and the old scale function seperate... I don't really want to break BC with 
+    // the 2.x update. We'll deprecate this version.
+    if ($function == 'scale') {
+      $function = 'deprecated_scale';
+    }
+
+    // prefix with module name as per new status quo.
+    // since other modules couldn't implement actions before this update
+    // we assume imagecache...
+    $function = 'imagecache_'. $function;
+
+    db_query("UPDATE {imagecache_action} SET action='%s', data='%s' WHERE actionid = %d", $function, $data, $row['actionid']);
+  }
+  return $ret;
+}
+
 
 /**
  * Implementation of hook_uninstall().
