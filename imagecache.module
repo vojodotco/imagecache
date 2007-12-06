@@ -155,15 +155,13 @@ function imagecache_imagecache_actions() {
       'description' => 'Crop an image to the rectangle specified by the given offsets and dimensions.',
       'file' => 'imagecache_actions.inc',
     ),
+    'imagecache_desaturate' => array(
+      'name' => 'Desaturate',
+      'description' => 'Convert an image to grey scale.',
+      'file' => 'imagecache_actions.inc',
+    ),
   );
 
-  if (function_exists('imagerotate')) {
-    $actions['imagecache_rotate'] = array(
-      'name' => 'Rotate',
-      'description' => 'Rotate an image by a set or randomized number of degrees.',
-      'file' => 'imagecache_actions.inc',
-    );
-  }
   return $actions;
 }
 
@@ -401,10 +399,12 @@ function imagecache_build_derivative($actions, $src, $dst, $tmp) {
 
   foreach ($actions as $action) {
     $size = getimagesize($tmp);
-    $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
-    $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
-    foreach ($action['data'] as $key => $value) {
-      $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
+    if (count($action['data'])) {
+      $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
+      $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
+      foreach ($action['data'] as $key => $value) {
+        $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
+      }
     }
     if (!_imagecache_apply_action($action, $tmp)) {
       watchdog( 'imagecache', t('action(id:%id): %action failed for %src', array('%id' => $action['actionid'], '%action' => $action['action'], '%src' => $src)), WATCHDOG_ERROR);
