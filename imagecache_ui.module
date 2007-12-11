@@ -37,6 +37,22 @@ function imagecache_ui_menu($may_cache) {
                       'access' => user_access('administer imagecache'),
                       'type' => MENU_LOCAL_TASK,
                );
+  }
+  else {
+    $presets = _imagecache_get_presets();
+    $presetid = arg(4);
+
+    // preset pages...
+    if (isset($presets[$presetid])) {
+      $items[] = array(
+        'path' => 'admin/build/imagecache/preset/'. arg(4),
+        'title' =>  t('Preset: %presetname', array('%presetname' => $presets[$presetid])),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('imagecache_ui_preset_form', arg(4)),
+      );
+      
+    }
+    
 
 /*
     $items[] = array( 'path' => 'admin/build/imagecache/preset',
@@ -111,6 +127,7 @@ function imagecache_ui_preset_add_form($presetid = 0) {
 
 function  imagecache_ui_preset_add_form_submit($id, $values) {
   _imagecache_preset_create($values['presetname']);
+  return 'admin/build/imagecache/list';
 }
 
 function imagecache_element_presetname_validate($element) {

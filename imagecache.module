@@ -714,9 +714,10 @@ function _imagecache_preset_load_by_name($name) {
 function _imagecache_preset_create($name) {
   $next_id = db_next_id('{imagecache_preset}_presetid');
   db_query('INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, \'%s\')', $next_id, $name);
+
   // Reset presets cache.
   _imagecache_get_presets(TRUE);
-  $_REQUEST['destination'] = 'admin/settings/imagecache/preset/'. $next_id;
+  return $next_id;
 }
 
 /**
