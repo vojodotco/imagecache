@@ -1,0 +1,6 @@
+; $Id$
+name = Imagecache UI
+description = ImageCache User Interface.
+dependencies = imagecache
+package = Image
+

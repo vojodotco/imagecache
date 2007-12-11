@@ -1,0 +1,401 @@
+<?php
+// $Id$
+
+/**
+ * Administrative interface to imagecache.
+ *
+ */
+
+function imagecache_ui_init() {
+  drupal_add_css(drupal_get_path('module','imagecache') .'/imagecache.css');
+}
+
+function imagecache_ui_help($section) {
+  switch($section) {
+    case 'admin/build/imagecache': return t('Manage imagecache preset.');
+  }
+}
+
+function imagecache_ui_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+    $items[] = array( 'path' => 'admin/build/imagecache',
+                      'title' => t('Imagecache Presets'),
+                      'description' => t('Administer imagecache presets and actions.'),
+                      'callback' => 'imagecache_ui_presets',
+                      'access' => user_access('administer imagecache'),
+               );
+    $items[] = array( 'path' => 'admin/build/imagecache/list',
+                      'title' => t('List'),
+                      'type' => MENU_DEFAULT_LOCAL_TASK,
+                      'weight' => -10,
+               );
+    $items[] = array( 'path' => 'admin/build/imagecache/add',
+                      'title' => t('Add New Preset'),
+                      'callback' => 'drupal_get_form',
+                      'callback arguments' => array('imagecache_ui_preset_add_form'),
+                      'access' => user_access('administer imagecache'),
+                      'type' => MENU_LOCAL_TASK,
+               );
+
+/*
+    $items[] = array( 'path' => 'admin/build/imagecache/preset',
+                      'title' => t('Imagecache Presets'),
+                      'description' => t('Administer imagecache presets and actions.'),
+                      'type' => MENU_DEFAULT_LOCAL_TASK,
+               );
+    $items[] = array( 'path' => 'admin/build/imagecache/preset/add',
+                      'title' => t('Add Preset'),
+                      'access' => user_access('administer imagecache'),
+                      'type' => MENU_LOCAL_TASK,
+                      'callback' => 'imagecache_ui_preset_add_form',
+               );
+    $items[] = array( 'path' => 'admin/build/imagecache/preset/delete',
+                      'access' => user_access('administer imagecache'),
+                      'type' => MENU_CALLBACK,
+                      'callback' => 'drupal_get_form',
+                      'callback arguments' => array('imagecache_ui_preset_delete_form'),
+               );
+
+    $items[] = array( 'path' => 'admin/build/imagecache/preset/transform/add',
+                      'access' => user_access('administer imagecache'),
+                      'type' => MENU_CALLBACK,
+                      'callback' => 'drupal_get_form',
+                      'callback arguments' => array('imagecache_ui_transform_add_form'),
+               );
+    $items[] = array( 'path' => 'admin/build/imagecache/macro/transform/delete',
+                      'access' => user_access('administer imagecache'),
+                      'type' => MENU_CALLBACK,
+                      'callback' => 'drupal_get_form',
+                      'callback arguments' => array('imagecache_ui_transform_delete_form'),
+               );
+*/
+  }
+
+  return $items;
+}
+
+/**
+ * Macro Admin callbacks and required functions.
+ */
+
+function imagecache_ui_presets() {
+  $header = array(t('Preset Name'), '');
+  $rows = array();
+  foreach(_imagecache_get_presets() as $presetid => $presetname) {
+    $row = array(); 
+    $row[] = l($presetname, 'admin/build/imagecache/preset/'. $presetid).'<br />';
+    $row[] = l(t('remove'),'admin/build/imagecache/preset/'. $presetid .'/delete').'<br />';
+    $rows[] = $row;
+  }
+  $output = theme('table', $header, $rows);
+  return $output;
+}
+
+function imagecache_ui_preset_add_form($presetid = 0) {
+  $form = array();
+  $form['presetname'] = array(
+    '#type' => 'textfield',
+    '#size' => '64',
+    '#title' => t('Preset Namespace'),
+    '#default_value' => '',
+    '#description' => t('The namespace is used in URL\'s for images to tell imagecache how to process an image. Please only use alphanumic characters, underscores (_), and hyphens (-) for preset names.'),
+    '#validate' => array('imagecache_element_presetname_validate' => array()),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create New Preset'),
+  );
+  return $form;
+}
+
+function  imagecache_ui_preset_add_form_submit($id, $values) {
+  _imagecache_preset_create($values['presetname']);
+}
+
+function imagecache_element_presetname_validate($element) {
+  // Check for duplicates
+  $presets = _imagecache_get_presets();
+  if (in_array($element['#value'], $presets)) {
+    form_set_error($element['#name'], t('The namespace you have chosen is already in use.'));
+  }
+
+  // Check for illegal characters in preset names
+  if (preg_match('/[^0-9a-zA-Z_\-]/', $element['#value'])) {
+    form_set_error($element['#name'], t('Please only use alphanumic characters, underscores (_), and hyphens (-) for preset names.'));
+  }
+}
+
+
+
+
+function imagecache_ui_admin_macro_add() {
+    drupal_set_title('New Macro');
+    return drupal_get_form('imagecache_ui_admin_macro_add_form', array());
+}
+
+function imagecache_ui_admin_macro_add_form($macro) {
+  $form = array();
+  $form['macro_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Macro Name'),
+    '#size' => 50,'#maxlength' => 50,
+    '#default_value' => '',
+    '#prefix' => '<div style="clear:right">',
+    '#suffix' => '</div>',
+    '#description' => t('Human Readable string to identify this macro'),
+  );
+  $form['op']['create'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create Macro'),
+  );
+  $form['op']['cancel'] = array(
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+  );
+  $form[] = array(
+    '#prefix'=>'<div>',
+    '#value'=>l(t('Back to Macro Listing'),'admin/imagecache'),
+    '#suffix'=>'</div>',
+  );
+  return $form;
+}
+function imagecache_ui_admin_macro_add_form_validate() {
+}
+
+function imagecache_ui_admin_macro_add_form_submit($form_id, $form_values) {
+  //drupal_set_message('imagecache_ui_admin_macro_new_form_submit');
+  //debug_msg($form_values);
+  $macro_id = imagecache_macro_create(check_plain($form_values['macro_name']));
+  if ($macro_id) {
+    return 'admin/build/imagecache/macro/'.$macro_id;
+  }
+}
+
+function imagecache_ui_admin_macro_form($macro) {
+  $form = array();
+  
+  $form['macro_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Macro Name'),
+    '#size' => 50,'#maxlength' => 50,
+    '#default_value' => $macro['macro_name'],
+    '#prefix' => '<div style="clear:right">',
+    '#suffix' => '</div>',
+    '#description' => t('Human Readable string to identify this macro'),
+  );
+  $form['macro_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $macro['macro_id'],
+  );
+
+  $info = imagecache_macro_info($macro);
+
+
+  $extensions =  (count($info['extensions'])) ? implode(', ',  $info['extensions']) : 'none';
+  $form['extensions'] = array(
+    '#type' => 'markup',
+    '#value' => 'supported extensions: '. $extensions,
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+  );
+
+  $mimes =  (count($info['mimes'])) ? implode(', ',  $info['mimes']) : 'none';
+  $form['mimes'] = array(
+    '#type' => 'markup',
+    '#value' => 'supported mimes: '. $mimes,
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+  );
+
+  $form['transform'] = imagecache_ui_transform_form($macro['macro_id']);
+  $form['transform']['#tree'] = TRUE;
+
+  $form['op']['update'] = array (
+    '#type' => 'submit',
+    '#value' => t('Update Macro')
+  );
+
+  $form[] = array(
+    '#prefix'=>'<br /><br /><div>',
+    '#value'=>l(t('Back to Macro Listing'),'admin/build/imagecache/macro'),
+    '#suffix'=>'</div>',
+  );
+  //debug_msg($form);
+  return $form;
+}
+
+function imagecache_ui_admin_macro_form_validate() {
+}
+
+function imagecache_ui_admin_macro_form_submit($form_id,$form_values) {
+  imagecache_macro_update($form_values);
+  if (count($form_values['transform'])) {
+    foreach($form_values['transform'] as $transform_id => $transform) {
+      imagecache_transform_update($transform);
+    }
+  }
+}
+
+function imagecache_ui_preset_delete_form($macro_id) {
+  $macro = imagecache_macro($macro_id);
+
+  $form = array();
+  $form['macro_id'] = array('#type' => 'value', '#value' => $macro['macro_id']);
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete %macro?', 
+      array('%macro' => $macro['macro_name'])
+    ),
+    'admin/build/imagecache/macro', 
+    t('This action cannot be undone.'),
+    t('Delete'),  t('Cancel')  
+  );
+}
+
+function imagecache_ui_preset_delete_form_validate() {
+}
+
+function imagecache_ui_preset_delete_form_submit($form_id, $form_values) {
+  $macro = imagecache_macro($form_values['macro_id']);
+  imagecache_macro_delete($macro['macro_id']);
+  return 'admin/build/imagecache/macro';
+}
+
+/**
+ * End Transformer Admin Macro Delete UI
+ */
+
+
+function imagecache_ui_transform_add_form($transform, $macro_id) {
+  $form['data'] = call_user_func($transform .'_form', array());
+  $form['data']['#tree'] = TRUE;
+  $form['macro_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $macro_id,
+  );
+  $form['base'] = array(
+    '#type' => 'hidden',
+    '#value' => $transform
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add Transform'),
+  );
+  return $form;
+}
+
+function imagecache_ui_transform_add_form_submit($form_id, $form_values) {
+  //drupal_set_message('imagecache_ui_admin_macro_transform_add_form_submit');
+  //debug_msg($form_values);
+  imagecache_transform_create($form_values);
+  return 'admin/build/imagecache/macro/'. $form_values['macro_id'];
+}
+
+function imagecache_ui_transform_delete_form($transform_id) {
+  $transform = imagecache_transform($transform_id);
+  $form = array();
+  $form['transform_id'] = array('#type' => 'value', '#value' => $transform['transform_id']);
+  return confirm_form(    
+    $form,
+    t('Are you sure you want to delete the %base transform?', 
+      array('%base' => t($transform['base']))
+     ),
+     'admin/build/imagecache/macro/'. $transform['macro_id'], 
+     t('This action cannot be undone.'),
+     t('Delete'),  t('Cancel')  
+  );
+}
+
+function imagecache_ui_transform_delete_form_submit($form_id, $form_values) {
+  $transform = imagecache_transform($form_values['transform_id']);
+  imagecache_transform_delete($transform);
+  return 'admin/build/imagecache/macro/'. $transform['macro_id'];
+}
+
+/**
+ * Begin Transform Section 
+ */
+function imagecache_ui_transform_form($macro_id) {
+  $available_transforms = imagecache_transforms();
+  $transforms = imagecache_macro_transforms($macro_id);
+  //debug_msg($transforms);
+  if (count($transforms)) {
+    foreach($transforms as $transform_id => $transform) {
+
+      $transformname = $transform['base'];
+      $form[$transform_id] = array(
+        '#type' => 'fieldset',
+        '#title' => t($transformname),
+      );  
+
+      $form[$transform_id]['base'] = array(
+        '#type' => 'hidden',
+        '#value' => $transformname
+      );
+
+      $form[$transform_id]['transform_id'] = array(
+          '#type' => 'hidden',
+          '#value' => $transform_id
+      );
+
+      
+      $form[$transform_id]['weight'] = array(
+          '#type' => 'select',
+          '#options' => array(0,1,2,3,4,5,6,7,8,9,10),
+          '#default_value' => $transform['weight'] ? $transform['weight'] : 0,
+          '#title' => t('Weight'),
+          '#prefix' => "<div class='transform-controls'>",
+      );
+
+      $form[$transform_id]['remove'] = array(
+          '#type' => 'markup',
+          '#value' => l('remove', 'admin/build/imagecache/macro/transform/delete/'. $transform_id),
+          '#suffix' => "</div>",
+      );
+
+      $form[$transform_id]['data'] = call_user_func($transform['base'] .'_form', $transform['data']); // get the _form
+      $form[$transform_id]['data']['#prefix'] = '<div class="transform-data">';
+      $form[$transform_id]['data']['#suffix'] = '</div>';
+    }
+  }
+
+  /// Fieldset with the 'create new transform' buttons
+  $form['newtransform'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Add a New Transform'),
+  );
+
+/*
+  $form['newtransform']['links'] = array(
+    '#type' => 'markup',
+    '$value' => '',
+  );
+*/
+  // @todo: expand to be more decriptive about transforms. help text with links.
+  $links = array();
+
+  foreach ($available_transforms as $base => $transform) {
+    $links[] =  array( 
+      'title' => t($transform['title']), 
+      'href' => 'admin/build/imagecache/macro/transform/add/'. $base .'/'. $macro_id,
+    ); 
+  }
+
+  $form['newtransform']['links'] = array(
+    '#type' => 'markup',
+    '#value' => theme('links', $links),
+  );
+  
+  return $form;
+}
+
+function imagecache_ui_transform_form_validate() {
+}
+
+function imagecache_ui_transform_form_submit($form_id, $form_values) {
+}
+
+function theme_imagecache_admin_title($element) {
+  return '<h2>'.$element['value'].'</h2>';
+}
