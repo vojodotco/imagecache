@@ -42,6 +42,7 @@ function imagecache_ui_menu($may_cache) {
       'type' => MENU_LOCAL_TASK,
     );
   }
+  // Use Dynamic menu items to get better breadcrumb trails by default.
   elseif (arg(0) == 'admin' && arg(1) == 'build' && arg(2) == 'imagecache' && arg(3) == 'preset') {
     $preset = imagecache_preset(arg(4));
     if (empty($preset)) {
@@ -63,30 +64,23 @@ function imagecache_ui_menu($may_cache) {
       'access' => user_access('flush imagecache'),
       'type' => MENU_CALLBACK,
     );
- 
     $items[] = array(
       'path' => 'admin/build/imagecache/preset/'. arg(4),
-      'title' =>  t('Edit Preset: !presetname', $t),
+      'title' =>  t('!presetname', $t),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('imagecache_ui_preset_form', arg(4)),
       'type' => MENU_CALLBACK,
     );
-
-    $definitions = imagecache_action_definitions();
-    $action = imagecache_action(arg(6));
-    if (!empty($action)) {
-      $definition = $definitions[$action['action']];
-      $t['!action'] = $definition['name'];
-      $items[] = array(
-        'path' => 'admin/build/imagecache/preset/'. arg(4) .'/action/'. arg(6),
-        'title' =>  t('Edit Action: !action for preset !presetname', $t),
-        'callback' => 'drupal_get_form',
-        'callback arguments' => array('imagecache_ui_action_form', arg(6)),
-        'type' => MENU_CALLBACK,
-      );
-    }
-
-    $definition = $definitions[arg(7)];
+/*
+    $items[] = array(
+      'path' => 'admin/build/imagecache/preset/'. arg(4) .'/action/add',
+      'title' =>  t('Add !action to !presetname', $t),
+      'callback' => 'imagecache_ui_action_add_list',
+      'callback arguments' => array(arg(4)),
+      'type' => MENU_CALLBACK,
+    );
+*/
+    $definition = imagecache_action_definition(arg(7));
     if (!empty($definition)) {
       $t['!action'] = $definition['name'];
       $items[] = array(
@@ -94,6 +88,26 @@ function imagecache_ui_menu($may_cache) {
         'title' =>  t('Add !action to !presetname', $t),
         'callback' => 'drupal_get_form',
         'callback arguments' => array('imagecache_ui_action_add_form', arg(4), arg(7)),
+        'type' => MENU_CALLBACK,
+      );
+    }
+ 
+    $action = imagecache_action(arg(6));
+    if ($action) {
+      $t['!action'] = $action['name'];
+      $items[] = array(
+        'path' => 'admin/build/imagecache/preset/'. arg(4) .'/action/'. arg(6),
+        'title' =>  t('!action for preset !presetname', $t),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('imagecache_ui_action_form', arg(6)),
+        'type' => MENU_CALLBACK,
+      );
+    
+      $items[] = array(
+        'path' => 'admin/build/imagecache/preset/'. arg(4) .'/action/'. arg(6) .'/delete',
+        'title' =>  t('Delete !action for preset !presetname', $t),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('imagecache_ui_action_delete_form', arg(4), arg(6)),
         'type' => MENU_CALLBACK,
       );
     }
@@ -220,7 +234,7 @@ function imagecache_ui_preset_flush_form_submit($form_id, $form_values) {
 
 
 function imagecache_ui_preset_form($presetid) {
-  $preset = imagecache_preset($presetid);
+  $preset = imagecache_preset($presetid, TRUE);
 
   if (!$preset) {
     drupal_set_message(t('The specified preset was not found'), 'error');
@@ -248,39 +262,47 @@ function imagecache_ui_preset_form($presetid) {
     '#theme' => 'imagecache_ui_preset_actions',
   );
 
-  $action_definitions = imagecache_action_definitions(TRUE);
 
   foreach($preset['actions'] as $i => $action) {
     // skip unknown actions...
-    if (!$definition = $action_definitions[$action['action']]) {
+    if(!$definition = imagecache_action_definition($action['action'])) {
       continue;
     }
-    
-    if ($definition['file']) {
-      require_once($definition['file']);
-    }
-
-    $action_name =  t($action_definitions[$action['action']]['name']);
+    $action_name =  t($definition['name']);
     $action_form['name'] = array(
       '#value' => $action_name,
+    );
+
+    $action_form['action'] = array(
+      '#type' => 'value',
+      '#value' => $action['action'],
     );
     $action_form['actionid'] = array(
       '#type' => 'value',
       '#value' => $action['actionid'],
     );
+    $action_form['presetid'] = array(
+      '#type' => 'value',
+      '#value' => $action['presetid'],
+    );
+
     $action_form['settings'] = array(
       '#theme' => $action['action'],
       '#value' => $action['data'],
     );
+    $action_form['data'] = array(
+      '#type' => 'value',
+      '#value' => $action['data'],
+    );
     $action_form['weight'] = array(
       '#type' => 'weight',
-      '#value' => $action['weight'],
+      '#default_value' => $action['weight'],
     );
     $action_form['configure'] = array(
       '#value' => l(t('Configure'), 'admin/build/imagecache/preset/'. $action['presetid'] .'/action/'. $action['actionid'] ),
     );
     $action_form['remove'] = array(
-      '#value' => l(t('Remove'), 'admin/build/imagecache/preset/'. $action['presetid'] .'/action/'. $action['actionid'] .'/remove'),
+      '#value' => l(t('Delete'), 'admin/build/imagecache/preset/'. $action['presetid'] .'/action/'. $action['actionid'] .'/delete'),
     );
     $form['actions'][$i] = $action_form; 
   }  
@@ -292,19 +314,52 @@ function imagecache_ui_preset_form($presetid) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  
    
-  foreach($action_definitions as $action => $definition) {
+  foreach(imagecache_action_definitions() as $action => $definition) {
     $form['actions']['new'][] = array(
       '#type' => 'markup',
       '#prefix' => '<div>',
       '#suffix' => '</div>',
       '#value' => l(t('Add !action', array('!action' => $definition['name'])), 
-                    'admin/build/imagecache/action/add/'. $action .'/'. $preset['presetid']) .
+                    'admin/build/imagecache/preset/'.  $preset['presetid'] .'/action/add/'. $action) .
                     ' - '. $definition['description'],
     );
   }
 
+/**
+ @todo: 404/403 image per preset.
+ @todo: global 404/403 image.
+    
+  $form['files'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' =>  t('Error Files'),
+  );
+
+  $form['files']['403']['file'] = array(
+    '#type' => 'file',
+    '#title' => t('403 Image'),
+    '#description' => t('Image that will be used when access is denied to the source image.'),
+  );
   
+  $path403 = imagecache/'. $preset['presetname'] .'/403.png';
+  if (file_exists($path403)) {
+    $url403 =  imagecache_create_url($preset['presetname'], $path403);
+
+    $form['files']['403']['view'] = array(
+      '#value' => '<img src="'. $url403 .'">', 
+    );
+  }
+
+  $form['files']['404'] = array(
+    '#type' => 'file',
+    '#title' => t('404 Image'),
+    '#description' => t('Image that will be used when the source image cannot be found.'),
+  );
+  */
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Update Preset'),
@@ -334,6 +389,15 @@ function theme_imagecache_ui_preset_actions($element) {
   return $output;
 }
 
+function imagecache_ui_preset_form_submit($form_id, $form_values) {
+  if (isset($form_values['actions'])) {
+    foreach($form_values['actions'] as $action) {
+      imagecache_action_save($action);
+    }
+  }
+  imagecache_preset_save($form_values);
+  return 'admin/build/imagecache/preset/'. $form_values['presetid'];
+}
 
 function imagecache_ui_action_form($actionid) {
   $definitions = imagecache_action_definitions();
@@ -378,4 +442,68 @@ function imagecache_ui_action_form_submit($form_id, $form_values) {
   }
   drupal_set_message('Unknown Action: '. $form_values['actionid']);
   return 'admin/build/imagecache';
+}
+
+function imagecache_ui_action_delete_form($presetid, $actionid) {
+  if (!$action = imagecache_action($actionid)) {
+    drupal_set_message('Unknown Action.'. $actionid, 'error');
+    drupal_goto('admin/build/imagecache');
+  } 
+  if (!$preset = imagecache_preset($action['presetid'])) {
+    drupal_set_message('Unknown Preset.');
+    drupal_goto('admin/build/imagecache');
+  }
+
+  $form = array();
+  $form['actionid'] = array('#type' => 'value', '#value' => $action['actionid']);
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete the !action action from preset !preset?', 
+      array('!preset' => $preset['presetname'], '!action' => $action['name'])
+    ),
+    'admin/build/imagecache', 
+    t('This action cannot be undone.'),
+    t('Delete'),  t('Cancel')  
+  );
+}
+
+
+function imagecache_ui_action_delete_form_submit($form_id, $form_values) {
+  $action = imagecache_action($form_values['actionid']);
+  imagecache_action_delete($action);
+  drupal_set_message(t('The action has been deleted.'));
+  return 'admin/build/imagecache/preset/'. $action['presetid'];
+}
+
+function imagecache_ui_action_add_form($presetid, $actionname) {
+  $definition = imagecache_action_definition($actionname);
+  
+  $form = array(
+    '#tree' => TRUE,
+  );
+  $form['action'] = array(
+    '#type' => 'value',
+    '#value' => $actionname,
+  );
+  $form['presetid'] = array(
+    '#type' => 'value',
+    '#value' => $presetid,
+  );
+  $form['weight'] = array(
+    '#type' => 'weight',
+    '#title' => t('Weight'),
+  );  
+
+  $form['data'] = call_user_func($actionname .'_form', $action['data']);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add Action'),
+  );
+  return $form;  
+}
+
+
+function imagecache_ui_action_add_form_submit($form_id, $form_values) {
+  imagecache_action_save($form_values);
+  return 'admin/build/imagecache/preset/'. $form_values['presetid'];
 }

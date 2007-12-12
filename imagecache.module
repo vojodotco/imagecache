@@ -208,7 +208,20 @@ function _imagecache_definitions_sort($a, $b) {
   }
   return ($a < $b) ? -1 : 1;
 }
- 
+
+function imagecache_action_definition($action) {
+  static $definition_cache;
+  if (!isset($definition_cache[$action])) {
+    $definitions = imagecache_action_definitions();
+    $definition = (isset($definitions[$action])) ? $definitions[$action] : array();
+    
+    if ($definition && $definition['file']) {
+      require_once($definition['file']);
+    }
+    $definition_cache[$action] = $definition;
+  }
+  return $definition_cache[$action];
+} 
 
 /**
  * Return a URL that points to the location of a derivative of the
@@ -323,10 +336,7 @@ function _imagecache_cache($presetname, $path) {
 function _imagecache_apply_action($action, $image) {
   $actions = imagecache_action_definitions();
  
-  if ($definition = $actions[$action['action']]) {
-    if (!empty($definition['file'])) {
-      require_once($definition['file']);
-    }
+  if ($definition = imagecache_action_definition($action['action'])) {
     return call_user_func($action['action'] .'_image', $image, $action['data']);
   }
   // skip undefined actions.. module probably got uninstalled or disabled.
@@ -676,7 +686,6 @@ function imagecache_presets($reset = FALSE) {
       content_clear_type_cache();
     }
   }
-
   // Return presets if the array is populated.
   if (!empty($presets)) {
     return $presets;
@@ -805,10 +814,22 @@ function imagecache_image_flush($path) {
 }
 
 function imagecache_action($actionid) {
-  $result = db_query('SELECT * FROM {imagecache_action} WHERE actionid=%d', $actionid);
-  $action = db_fetch_array($result);
-  $action['data'] = unserialize($action['data']);
-  return $action;
+  static $actions;
+
+  if (!isset($actions[$actionid])) {
+    $action = array();
+
+    $result = db_query('SELECT * FROM {imagecache_action} WHERE actionid=%d', $actionid);
+    if ($row = db_fetch_array($result)) {
+      $action = $row;
+      $action['data'] = unserialize($action['data']);
+
+      $definition = imagecache_action_definition($action['action']);
+      $action = array_merge($definition, $action);
+      $actions[$actionid] = $action;
+    }
+  }  
+  return $actions[$actionid];
 }
 
 function imagecache_action_save($action) {
