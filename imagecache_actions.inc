@@ -8,6 +8,10 @@ function imagecache_scale_form($data) {
   return imagecache_resize_form($data);
 }
 
+function theme_imagecache_scale($element) {
+  return theme_imagecache_resize($element);
+}
+
 function imagecache_scale_image($image, $data) {
   // Set impossibly large values if the width and height aren't set.
   $data['width'] = $data['width'] ? $data['width'] : 9999999;
@@ -26,6 +30,11 @@ function imagecache_scale_image($image, $data) {
 function imagecache_scale_and_crop_form($data) {
   return imagecache_resize_form($data);
 }
+
+function theme_imagecache_scale_and_crop($element) {
+  return theme_imagecache_resize($element);
+}
+
 
 function imagecache_scale_and_crop_image($image, $data) {
    // Set impossibly large values if the width and height aren't set.
@@ -71,6 +80,12 @@ function imagecache_deprected_scale_form($data) {
     '#description' => t('Enter a height in pixels or as a percentage. i.e. 500 or 80%.'),
   );
   return $form;
+}
+
+function theme_imagecache_deprecated_scale($element) {
+  $data = $element['#value'];
+  $options = array('inside' => t('Inside dimensions'), 'outside' => t('Outside dimensions'));
+  return 'width: '. $data['width'] .', height: '. $data['height'] .', fit: '. $options[$data['fit']];
 }
 
 function imagecache_deprecated_scale_image($image, $data) {
@@ -124,6 +139,11 @@ function imagecache_crop_form($data) {
   return $form;
 }
 
+function theme_imagecache_crop($element) {
+  $data = $element['#value'];
+  return 'width: '. $data['width'] .', height: '. $data['height'] .', xoffset: '. $data['xoffset'] .', yoffset: '. $data['yoffset'];
+}
+
 function imagecache_crop_image($image, $data) {
   if (!image_crop($image, $image, $data['xoffset'], $data['yoffset'], $data['width'], $data['height'])) {
       watchdog('imagecache', t('imagecache_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
@@ -139,6 +159,11 @@ function imagecache_crop_image($image, $data) {
 function imagecache_desaturate_form($data) {
   return array();
 }
+
+function theme_imagecache_desaturate($element) {
+  return '';
+}
+
 
 function imagecache_desaturate_image($image, $data = array()) {
    if (!image_desaturate($image, $image)) {
@@ -210,3 +235,31 @@ if (!function_exists('image_gd_desaturate')) {
     return $result;
   }
 }
+
+if (!function_exists('image_scale_and_crop')) {
+  /**
+   * Scales an image to the given width and height by scaling and cropping.
+   *
+   * The resulting image always has the exact target dimensions.
+   *
+   * @param $source         The file path of the source image
+   * @param $destination    The file path of the destination image
+   * @param $width          The target width
+   * @param $height         The target height
+   *
+   * @return True or FALSE, based on success
+   */
+  function image_scale_and_crop($source, $destination, $width, $height) {
+    $info = image_get_info($source);
+
+    $scale = max($width / $info['width'], $height / $info['height']);
+    $x = round(($info['width'] * $scale - $width) / 2);
+    $y = round(($info['height'] * $scale - $height) / 2);
+
+    if (image_toolkit_invoke('resize', array($source, $destination, $info['width'] * $scale, $info['height'] * $scale))) {
+      return image_toolkit_invoke('crop', array($destination, $destination, $x, $y, $width, $height));
+    }
+  }
+}
+
+
