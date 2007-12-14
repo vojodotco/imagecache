@@ -33,6 +33,17 @@
  * Drupal Hooks
  *********************************************************************************************/
 
+
+function imagecache_init() {
+  register_shutdown_function('imagecache_shutdown');
+}
+
+function imagecache_shutdown() {
+  global $imagecache_lock_file;
+  unlink($imagecache_lock_file);
+}
+
+
 /**
  * Implementation of hook_perm().
  */
@@ -300,6 +311,8 @@ function _imagecache_cache($presetname, $path) {
 
   $dst = imagecache_create_path($preset['presetname'], $path);
   $tmp = file_directory_temp() .'/'. $preset['presetname'] . str_replace(dirname($src) .'/', '', $src);
+  global $imagecache_lock_file;
+  $imagecache_lock_file = $tmp;
 
   if (file_exists($tmp)) {
     watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $tmp)), WATCHDOG_NOTICE);
@@ -822,3 +835,5 @@ function imagecache_action_delete($action) {
   imagecache_preset_flush($preset);
   imagecache_presets(TRUE);
 }
+
+
