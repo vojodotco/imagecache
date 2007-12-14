@@ -123,7 +123,7 @@ function imagecache_ui_presets() {
     $row[] = l($preset['presetname'], 'admin/build/imagecache/preset/'. $preset['presetid']);
     $links = array();
     $links[] = l(t('edit'), 'admin/build/imagecache/preset/'. $preset['presetid']);
-    $links[] = l(t('remove'),'admin/build/imagecache/preset/'. $preset['presetid'] .'/remove');
+    $links[] = l(t('remove'),'admin/build/imagecache/preset/'. $preset['presetid'] .'/delete');
     $links[] = l(t('flush'),'admin/build/imagecache/preset/'. $preset['presetid'] .'/flush' );
     $row[] = implode ('&nbsp;&nbsp;&nbsp;&nbsp;', $links);
     $rows[] = $row;
