@@ -6,10 +6,6 @@
  *
  */
 
-function imagecache_ui_init() {
-  drupal_add_css(drupal_get_path('module','imagecache') .'/imagecache.css');
-}
-
 function imagecache_ui_help($section) {
   switch($section) {
     case 'admin/build/imagecache': return t('Manage imagecache preset.');
