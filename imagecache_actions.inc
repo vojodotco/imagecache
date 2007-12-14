@@ -16,7 +16,9 @@ function imagecache_scale_form($data) {
 }
 
 function theme_imagecache_scale($element) {
-  return theme_imagecache_resize($element);
+  $output = theme_imagecache_resize($element) .  ', upscale: '. 
+  $output .= ($element['#value']['upscale']) ? t('Yes') : t('No');
+  return $output;
 }
 
 function imagecache_scale_image($image, $data) {

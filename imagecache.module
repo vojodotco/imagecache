@@ -417,7 +417,7 @@ function imagecache_build_derivative($actions, $src, $dst, $tmp) {
   }
 
   $image = imageapi_image_open($tmp);
-  drupal_set_message('loaded image: '. print_r($image, 1));
+
   foreach ($actions as $action) {
     if (!empty($action['data'])) {
       // QuickSketch, why do these run first/twice? - dopry.
