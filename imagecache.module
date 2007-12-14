@@ -66,18 +66,7 @@ function imagecache_menu($may_cache) {
       'access' => TRUE,
       'type' => MENU_CALLBACK
     );     
-
-    // settings form.
-    $items[] = array(
-      'path' => 'admin/settings/imagecache',
-      'title' => t('ImageCache'),
-      'description' => t('Configure ImageCache.'),
-      'access' => user_access('administer imagecache'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('imagecache_settings'),
-    );
   }
-
   return $items;
 }
 
@@ -115,20 +104,6 @@ function imagecache_requirements($phase) {
     }
   }
   return $requirements;
-}
-
-
-function imagecache_settings() {
-  $form = array();
-
-  $form['imagecache_experimental'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Experimental Mode'),
-    '#description' => t('use custom image processing functions instead of core\'s image toolkits.'),
-    '#default_value' => variable_get('imagecache_experimental', 0),
-  );
-
-  return system_settings_form($form);
 }
 
 /**
@@ -428,22 +403,36 @@ function imagecache_build_derivative($actions, $src, $dst, $tmp) {
     return FALSE;
   }
 
+  $image = imageapi_image_open($tmp);
+  drupal_set_message('loaded image: '. print_r($image, 1));
   foreach ($actions as $action) {
-    $size = getimagesize($tmp);
-    if (count($action['data'])) {
-      $new_width = _imagecache_filter('width', $action['data']['width'], $size[0], $size[1]);
-      $new_height = _imagecache_filter('height', $action['data']['height'], $size[0], $size[1]);
+    if (!empty($action['data'])) {
+      // QuickSketch, why do these run first/twice? - dopry.
+      if (isset($action['data']['width'])) {
+        $width = _imagecache_filter('width', $action['data']['width'], $image->info['width'], $image->info['height']);
+      }
+      if (isset($action['data']['height'])) {
+        $height = _imagecache_filter('height', $action['data']['height'], $image->info['width'], $image->info['height']);
+      }
       foreach ($action['data'] as $key => $value) {
-        $action['data'][$key] = _imagecache_filter($key, $value, $size[0], $size[1], $new_width, $new_height);
+        $action['data'][$key] = _imagecache_filter($key, $value, $image->info['width'], $image->info['height'], $width, $height);
       }
     }
-    if (!_imagecache_apply_action($action, $tmp)) {
+    if (!$image = _imagecache_apply_action($action, $image)) {
       watchdog( 'imagecache', t('action(id:%id): %action failed for %src', array('%id' => $action['actionid'], '%action' => $action['action'], '%src' => $src)), WATCHDOG_ERROR);
       return FALSE;
     }
   }
-  if (!file_move($tmp, $dst)) {
-    watchdog('imagecache', t('failed to move tmp(%tmp) to dst(%dst)', array('%tmp' => $tmp, '%dst' => $dst)), WATCHDOG_ERROR);
+
+  imageapi_image_close($image, $tmp);
+
+  if (!file_move($tmp, $dst, FILE_EXISTS_ERROR)) {
+    if (file_exists($dst)) {
+      watchdog('imagecache', t('Cached image file already exists. There is an issue with your Rewrite configuration.'), WATCHDOG_ERROR);
+    }
+    else {
+      watchdog('imagecache', t('failed to move tmp(%tmp) to dst(%dst)', array('%tmp' => $tmp, '%dst' => $dst)), WATCHDOG_ERROR);
+    }
     return FALSE;
   }
   return TRUE;
@@ -604,11 +593,11 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
  * ImageCache action implementation example in module.
  */
 function imagecache_resize_image($image, $data) {
-  if (!image_resize($image, $image, $data['width'], $data['height'])) {
+  if (!$image = imageapi_resize($image, $data['width'], $data['height'])) {
     watchdog('imagecache', t('imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
     return FALSE;
   }
-  return TRUE;
+  return $image;
 }
 
 function imagecache_resize_form($action) {

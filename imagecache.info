@@ -1,4 +1,6 @@
 ; $Id$
-name = Imagecache
+name = ImageCache
 description = Dynamic image manipulator and cache.
-package = Image
+package = ImageCache
+dependencies = imageapi
+version = VERSION
