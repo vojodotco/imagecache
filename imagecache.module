@@ -92,8 +92,8 @@ function imagecache_requirements($phase) {
 
   if ($phase == 'runtime') {
     // Check for an image library.
-    if (count(image_get_available_toolkits()) == 0) {
-      $requirements['clean_urls'] = array(
+    if (count(imageapi_get_available_toolkits()) == 0) {
+      $requirements['imageapi_toolkits'] = array(
         'title' => $t('Image Toolkit'),
         'value' => $t('No image toolkits available'),
         'severity' => REQUIREMENT_ERROR,
