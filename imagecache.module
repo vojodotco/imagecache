@@ -614,12 +614,8 @@ function _imagecache_recursive_delete($path) {
 }
 
 /**
-  * Theme an img tag for displaying the image.
-  */
-function theme_imagecache_display($node, $label, $url, $attributes) {
-  return '<img src="'. check_url($url) .'" alt="'. check_plain($node->title) .'" title="'. check_plain($node->title) .'" '. drupal_attributes($attributes) .' />';
-}
-
+ * Theme an img tag for displaying the image, with or without link.
+ */
 function theme_imagecache_formatter($field, $item, $formatter) {
   if (preg_match('/_linked$/', $formatter)) {
     $formatter = preg_replace('/_linked$/', '', $formatter);
