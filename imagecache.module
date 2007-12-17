@@ -503,7 +503,11 @@ function imagecache_field_formatter_info() {
       'field types' => array('image'),
     );
     $formatters[$preset['presetname'] .'_linked'] = array(
-      'label' => $preset['presetname'] .' as link',
+      'label' => t('@preset as link to node', array('@preset' => $preset['presetname'])),
+      'field types' => array('image'),
+    );
+    $formatters[$preset['presetname'] .'_imagelink'] = array(
+      'label' => t('@preset as link to image', array('@preset' => $preset['presetname'])),
       'field types' => array('image'),
     );
   }
@@ -524,6 +528,7 @@ function imagecache_field_formatter($field, $item, $formatter) {
   }
 
   $presetname = preg_replace('/_linked$/', '', $formatter);
+  $presetname = preg_replace('/_imagelink$/', '', $formatter);
   if ($preset = imagecache_preset_by_name($presetname)) {
     return theme('imagecache_formatter', $field, $item, $formatter);
   }
@@ -622,6 +627,10 @@ function theme_imagecache_formatter($field, $item, $formatter) {
     $image = theme('imagecache', $formatter, $item['filepath'], $item['alt'], $item['title']);
     $output = l($image, 'node/'. $item['nid'], array(), NULL, NULL, FALSE, TRUE);
   }
+  else if (preg_match('/_imagelink$/', $formatter)) {
+    $formatter = preg_replace('/_imagelink$/', '', $formatter);
+    $output = theme('imagecache_imagelink', $formatter, $item['filepath'], $item['alt'], $item['title']);
+  }
   else {
     $output = theme('imagecache', $formatter, $item['filepath'], $item['alt'], $item['title']);
   }
@@ -633,6 +642,12 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
 
   $imagecache_path = imagecache_create_url($namespace, $path);
   return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
+}
+
+function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  $image = theme('imagecache', $namespace, $path, $alt, $title);
+  $original_image_url = file_create_url($path);
+  return l($image, $original_image_url, array(), NULL, NULL, FALSE, TRUE);
 }
 
 
