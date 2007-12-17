@@ -153,7 +153,7 @@ function  imagecache_ui_preset_add_form_submit($id, $form_values) {
   $preset = array('presetname' => $form_values['presetname']);
   $preset = imagecache_preset_save($preset);
   drupal_set_message(t('Preset "%name" (ID: @id) Created.', array('%name' => $preset['presetname'], '@id' => $preset['presetid'])));
-  return 'admin/build/imagecache';
+  return 'admin/build/imagecache/preset/'. $preset['presetid'];
 }
 
 function imagecache_element_presetname_validate($element) {
