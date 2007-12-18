@@ -34,13 +34,10 @@
  *********************************************************************************************/
 
 
-function imagecache_init() {
-  register_shutdown_function('imagecache_shutdown');
-}
-
-function imagecache_shutdown() {
-  global $imagecache_lock_file;
-  unlink($imagecache_lock_file);
+function imagecache_shutdown_clear_lockfile($path) {
+  if (file_exists($path)) {
+    unlink($path);
+  }
 }
 
 
@@ -310,20 +307,20 @@ function _imagecache_cache($presetname, $path) {
   }
 
   $dst = imagecache_create_path($preset['presetname'], $path);
-  $tmp = file_directory_temp() .'/'. $preset['presetname'] . basename($src);
-  global $imagecache_lock_file;
-  $imagecache_lock_file = $tmp;
-
-  if (file_exists($tmp)) {
-    watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $tmp)), WATCHDOG_NOTICE);
+  $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src) ;
+  if (file_exists($lockfile)) {
+    watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile)), WATCHDOG_NOTICE);
     // send a response code that will make the browser wait and reload in a 1/2 sec. 
     // header()
     exit;
   }
- 
+  touch($lockfile);
+  // register the shtdown function to clean up lock files.
+  register_shutdown_function('imagecache_shutdown_clear_lockfile', $lockfile);
+
   // check if deriv exists... (file was created between apaches request handler and reaching this code)
   // otherwise try to create the derivative. 
-  if (!file_exists($dst) && !imagecache_build_derivative($preset['actions'], $src, $dst, $tmp)) {
+  if (!file_exists($dst) && !imagecache_build_derivative($preset['actions'], $src, $dst)) {
     // Generate an error if image could not generate.
     watchdog('imagecache', t('Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset)), WATCHDOG_ERROR);
     header("HTTP/1.0 500 Internal Server Error");
@@ -437,14 +434,7 @@ function _imagecache_mkdir($dir) {
  * @param $tmp      Path of the temporary file used for manipulating the image.
  * @return TRUE - derivative generated, FALSE - no derivative generated, NULL - derivative being generated
  */
-function imagecache_build_derivative($actions, $src, $dst, $tmp) {
-  // Copy src to tmp. We use the existence of tmp as a lock.
-  if (!file_copy($src, $tmp)) {
-    // can't copy source to temp... ack..
-    watchdog('imagecache', t('Could not create temporary file: %path', array('%path' => $tmp)), WATCHDOG_ERROR);
-    return FALSE;
-  }
-
+function imagecache_build_derivative($actions, $src, $dst) {
   // get the folder for the final location of this preset...
   $dir = dirname($dst);
 
@@ -454,7 +444,10 @@ function imagecache_build_derivative($actions, $src, $dst, $tmp) {
     return FALSE;
   }
 
-  $image = imageapi_image_open($tmp);
+  if (!$image = imageapi_image_open($src)) {
+    return FALSE; 
+  }
+
 
   foreach ($actions as $action) {
     if (!empty($action['data'])) {
@@ -475,14 +468,11 @@ function imagecache_build_derivative($actions, $src, $dst, $tmp) {
     }
   }
 
-  imageapi_image_close($image, $tmp);
+  imageapi_image_close($image, $dst);
 
-  if (!file_move($tmp, $dst, FILE_EXISTS_ERROR)) {
+  if (!imageapi_image_close($image, $dst)) {
     if (file_exists($dst)) {
       watchdog('imagecache', t('Cached image file already exists. There is an issue with your Rewrite configuration.'), WATCHDOG_ERROR);
-    }
-    else {
-      watchdog('imagecache', t('failed to move tmp(%tmp) to dst(%dst)', array('%tmp' => $tmp, '%dst' => $dst)), WATCHDOG_ERROR);
     }
     return FALSE;
   }
@@ -519,10 +509,8 @@ function imagecache_field_formatter_info() {
  */
 function imagecache_field_formatter($field, $item, $formatter) {
   if (empty($item['fid'])) {
-    //drupal_set_message('imagecache_field_formatter: <pre>'. print_r($field_info, TRUE) .'</pre>');
-    //drupal_set_message('item <pre>'. print_r($item, TRUE) .'</pre>');
-    //$item['filepath']  = 
-    return '';
+    //drupal_set_message('imagecache_field_formatter: <pre>'. print_r($field, TRUE) .'</pre>');
+    $item = $field['default_image']; 
   }
   // Views does not load the file for us, while CCK display fields does.
   if (!isset($item['filepath'])) {
