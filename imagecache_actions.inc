@@ -62,7 +62,7 @@ function imagecache_scale_and_crop_image($image, $data) {
  * Imagecache Deprecated Scale.
  * This will be removed in imagecache 2.1
  */
-function imagecache_deprected_scale_form($data) {
+function imagecache_deprecated_scale_form($data) {
   $helptext = array();
   $helptext['inside'] = t('<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width.');
   $helptext['outside'] = t('<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square.');
