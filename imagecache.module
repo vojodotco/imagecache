@@ -518,7 +518,10 @@ function imagecache_field_formatter_info() {
  * Implementation of hook_field_formatter().
  */
 function imagecache_field_formatter($field, $item, $formatter) {
-  if (!isset($item['fid'])) {
+  if (empty($item['fid'])) {
+    //drupal_set_message('imagecache_field_formatter: <pre>'. print_r($field_info, TRUE) .'</pre>');
+    //drupal_set_message('item <pre>'. print_r($item, TRUE) .'</pre>');
+    //$item['filepath']  = 
     return '';
   }
   // Views does not load the file for us, while CCK display fields does.
@@ -655,7 +658,7 @@ function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $
  * ImageCache action implementation example in module.
  */
 function imagecache_resize_image($image, $data) {
-  if (!$image = imageapi_resize($image, $data['width'], $data['height'])) {
+  if (!$image = imageapi_image_resize($image, $data['width'], $data['height'])) {
     watchdog('imagecache', t('imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
     return FALSE;
   }
