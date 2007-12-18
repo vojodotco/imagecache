@@ -98,9 +98,8 @@ function theme_imagecache_deprecated_scale($element) {
 }
 
 function imagecache_deprecated_scale_image($image, $data) {
-  $size = getimagesize($image);
   if ($data['fit'] == 'outside' && $data['width'] && $data['height']) {
-    $ratio = $size[0]/$size[1];
+    $ratio = $image->info['width'] / $image->info['height'];
     $new_ratio = $data['width']/$data['height'];
     $data['width'] = $ratio > $new_ratio ? 0 : $data['width'];
     $data['height'] = $ratio < $new_ratio ? 0 : $data['height'];
