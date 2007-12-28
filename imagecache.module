@@ -324,8 +324,6 @@ function _imagecache_cache($presetname, $path) {
     // Generate an error if image could not generate.
     watchdog('imagecache', t('Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset)), WATCHDOG_ERROR);
     header("HTTP/1.0 500 Internal Server Error");
-    // remove lock file on error.
-    unlink($tmp);
     exit;
   } 
   imagecache_transfer($dst);
