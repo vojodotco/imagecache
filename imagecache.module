@@ -419,6 +419,10 @@ function _imagecache_mkdir($dir) {
       watchdog('imagecache', t('Could not create destination: %dir halted at: %path', array('%dir' => $dir, '%path' => $path)), WATCHDOG_ERROR);
       return FALSE;
     }
+    if (!@chmod($path, 0775)) {
+      watchdog('imagecache', t('Could not set permissons on created directory: %dir halted at: %path', array('%dir' => $dir, '%path' => $path)), WATCHDOG_ERROR);
+      return FALSE;
+    } 
   }
   return TRUE;
 }
