@@ -1,3 +1,5 @@
-Upgrading From imagecache version 1.x to 2.x
+Upgrading From imagecache version 1.x to 2.0
+  -- The old ImageScale actions should be turned into Deprecated Sclae actions. You
+     should update your presets to use the new scale or 'scale and crop' actions.
 
 
