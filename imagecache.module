@@ -331,7 +331,7 @@ function _imagecache_cache($presetname, $path) {
   imagecache_transfer($dst);
 }
 
-function _imagecache_apply_action($action, $image) {
+function _imagecache_apply_action($action, &$image) {
   $actions = imagecache_action_definitions();
  
   if ($definition = imagecache_action_definition($action['action'])) {
@@ -462,7 +462,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
         $action['data'][$key] = _imagecache_filter($key, $value, $image->info['width'], $image->info['height'], $width, $height);
       }
     }
-    if (!$image = _imagecache_apply_action($action, $image)) {
+    if (!_imagecache_apply_action($action, $image)) {
       watchdog( 'imagecache', t('action(id:%id): %action failed for %src', array('%id' => $action['actionid'], '%action' => $action['action'], '%src' => $src)), WATCHDOG_ERROR);
       return FALSE;
     }
@@ -508,8 +508,7 @@ function imagecache_field_formatter_info() {
  * Implementation of hook_field_formatter().
  */
 function imagecache_field_formatter($field, $item, $formatter) {
-  if (empty($item['fid'])) {
-    //drupal_set_message('imagecache_field_formatter: <pre>'. print_r($field, TRUE) .'</pre>');
+  if (empty($item['fid']) && $field['use_default_image']) {
     $item = $field['default_image']; 
   }
   // Views does not load the file for us, while CCK display fields does.
@@ -645,12 +644,12 @@ function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $
 /************************************************************************************
  * ImageCache action implementation example in module.
  */
-function imagecache_resize_image($image, $data) {
-  if (!$image = imageapi_image_resize($image, $data['width'], $data['height'])) {
+function imagecache_resize_image(&$image, $data) {
+  if (!imageapi_image_resize($image, $data['width'], $data['height'])) {
     watchdog('imagecache', t('imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
     return FALSE;
   }
-  return $image;
+  return TRUE;
 }
 
 function imagecache_resize_form($action) {
