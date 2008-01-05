@@ -483,7 +483,17 @@ function imagecache_build_derivative($actions, $src, $dst) {
 
   
 
+function imagecache_imagefield_file($op, $file) {
+  switch($op) {
+    // Delete imagecache presets when imagecache images are deleted.
+    case 'delete': imagecache_image_flush($file['filepath']); break;
 
+    // Create imagecache derivatives when files are saved. 
+    case 'save': 
+      break; 
+  }
+
+}
 
 /**
  * Implementation of hook_field_formatter_info().
@@ -832,8 +842,7 @@ function imagecache_preset_flush($preset) {
  */
 function imagecache_image_flush($path) {
   foreach (imagecache_presets() as $preset) {
-    $ipath = file_directory_path() .'/imagecache/'. $preset['presetname'] .'/'. $path;
-    file_delete($ipath);
+    file_delete(imagecache_create_path($preset['presetname'], $path));
   }
 }
 
