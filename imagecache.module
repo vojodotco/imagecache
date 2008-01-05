@@ -273,7 +273,7 @@ function imagecache_cache_private() {
     _imagecache_cache($preset, $source);
   } 
   else {
-    // if there is a 40333mage uploaded for the preset display it.
+    // if there is a 403 image, display it.
     $accesspath = file_create_path('imagecache/'. $preset .'.403.png');
     if (file_exists($accesspath)) {
       imagecache_transfer($accesspath);
@@ -295,6 +295,25 @@ function _imagecache_cache($presetname, $path) {
   }
   $src = file_create_path($path);
   if (!is_file($src)) {
+    // scan the session
+    foreach ($_SESSION['imagefield'] as $fieldname => $files) {
+      foreach ($files as $delta => $file) {
+        if ($file['preview'] == $src) {
+          $dst = tempnam(file_directory_temp(), 'imagecache.preview');
+          if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
+            // Generate an error if image could not generate.
+            watchdog('imagecache', t('Failed generating a preview image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset)), WATCHDOG_ERROR);
+            header("HTTP/1.0 500 Internal Server Error");
+            exit;
+          }
+          imagecache_transfer($dst);
+          unlink($dst);
+        }
+      }
+    }
+
+  
+  
     // if there is a 404 image uploaded for the preset display it.
     $notfoundpath = file_create_path('imagecache/'. $preset['presetname'] .'.404.png');
     if (file_exists($notfoundpath)) {
@@ -624,6 +643,7 @@ function _imagecache_recursive_delete($path) {
  * Theme an img tag for displaying the image, with or without link.
  */
 function theme_imagecache_formatter($field, $item, $formatter) {
+  $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
   if (preg_match('/_linked$/', $formatter)) {
     $formatter = preg_replace('/_linked$/', '', $formatter);
     $image = theme('imagecache', $formatter, $item['filepath'], $item['alt'], $item['title']);
@@ -641,7 +661,6 @@ function theme_imagecache_formatter($field, $item, $formatter) {
 
 function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
   $attributes = drupal_attributes($attributes);
-
   $imagecache_path = imagecache_create_url($namespace, $path);
   return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
