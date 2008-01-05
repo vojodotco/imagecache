@@ -544,14 +544,14 @@ function imagecache_field_formatter($field, $item, $formatter) {
   }
   // Views does not load the file for us, while CCK display fields does.
   if (!isset($item['filepath'])) {
-    $file = _imagecache_file_load($item['fid']);
-    $item = array_merge($item, $file);
+    $item = array_merge($item,  _imagecache_file_load($item['fid']));
   }
 
-  $presetname = preg_replace('/_linked$/', '', $formatter);
-  $presetname = preg_replace('/_imagelink$/', '', $formatter);
+  $presetname = $formatter;
+  $presetname = preg_replace('/_linked$/', '', $presetname);
+  $presetname = preg_replace('/_imagelink$/', '', $presetname);
   if ($preset = imagecache_preset_by_name($presetname)) {
-    return theme('imagecache_formatter', $field, $item, $formatter);
+    return theme('imagecache_formatter', $field, $item, $presetname);
   }
 }
 
