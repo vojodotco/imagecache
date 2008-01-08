@@ -33,14 +33,6 @@
  * Drupal Hooks
  *********************************************************************************************/
 
-
-function imagecache_shutdown_clear_lockfile($path) {
-  if (file_exists($path)) {
-    unlink($path);
-  }
-}
-
-
 /**
  * Implementation of hook_perm().
  */
@@ -335,7 +327,7 @@ function _imagecache_cache($presetname, $path) {
   }
   touch($lockfile);
   // register the shtdown function to clean up lock files.
-  register_shutdown_function('imagecache_shutdown_clear_lockfile', $lockfile);
+  register_shutdown_function('file_delete', $lockfile);
 
   // check if deriv exists... (file was created between apaches request handler and reaching this code)
   // otherwise try to create the derivative. 
