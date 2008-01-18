@@ -286,7 +286,8 @@ function _imagecache_cache($presetname, $path) {
     exit;
   }
 
-  // umm yeah deliver it early if it is there. 
+  // umm yeah deliver it early if it is there. especially useful
+  // to prevent lock files from being created when delivering private files. 
   $dst = imagecache_create_path($preset['presetname'], $path);
   if (file_exists($dst)) {
     imagecache_transfer($dst);
