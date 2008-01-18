@@ -285,6 +285,13 @@ function _imagecache_cache($presetname, $path) {
     header("HTTP/1.0 404 Not Found");
     exit;
   }
+
+  // umm yeah deliver it early if it is there. 
+  $dst = imagecache_create_path($preset['presetname'], $path);
+  if (file_exists($dst)) {
+    imagecache_transfer($dst);
+  }  
+
   $src = file_create_path($path);
   if (!is_file($src)) {
     // scan the session
@@ -303,8 +310,6 @@ function _imagecache_cache($presetname, $path) {
         }
       }
     }
-
-  
   
     // if there is a 404 image uploaded for the preset display it.
     $notfoundpath = file_create_path('imagecache/'. $preset['presetname'] .'.404.png');
@@ -317,7 +322,6 @@ function _imagecache_cache($presetname, $path) {
     exit;
   }
 
-  $dst = imagecache_create_path($preset['presetname'], $path);
   $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src) ;
   if (file_exists($lockfile)) {
     watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile)), WATCHDOG_NOTICE);
