@@ -481,8 +481,6 @@ function imagecache_build_derivative($actions, $src, $dst) {
     }
   }
 
-  imageapi_image_close($image, $dst);
-
   if (!imageapi_image_close($image, $dst)) {
     if (file_exists($dst)) {
       watchdog('imagecache', t('Cached image file already exists. There is an issue with your Rewrite configuration.'), WATCHDOG_ERROR);
