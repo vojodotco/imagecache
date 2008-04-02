@@ -151,6 +151,7 @@ function imagecache_update_4() {
 
     db_query("UPDATE {imagecache_action} SET action='%s', data='%s' WHERE actionid = %d", $function, $data, $row['actionid']);
   }
+  cache_clear_all('*', 'cache', TRUE);
   return $ret;
 }
 
