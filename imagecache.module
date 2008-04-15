@@ -5,26 +5,28 @@
  * @file
  * Dynamic image resizer and image cacher.
  *
- * Imagecache allows you to setup specialized identifiers for dynamic image
- * processing and caching. It abuses the rewrite rules used for drupal's clean
- * URLs to provide dynamic image generation.
+ * Imagecache allows you to setup presets for image processing.
+ * If an ImageCache derivative doesn't exist the web server's 
+ * rewrite rules will pass the request to Drupal which in turn
+ * hands it off to imagecache to dynamically generate the file.
  * 
- * Earlier security flaws were overcome by using 'presets' similar to
- * image.module. We don't fuss with the database, and creating data that we have
- * to keep up within Drupal. We do it on the fly and flush it when we want to,
- * or when a preset changes.
+ * To view a derivative image you request a special url containing 
+ * 'imagecache/<presetname>/path/to/file.ext.
+ *
+ * Presets can be managed at http://example.com/admin/build/imagecache.
+ *
+ * To view a derivative image you request a special url containing 
+ * 'imagecache/<presetname>/path/to/file.ext.
+ *
+ * If you had a preset names 'thumbnail' and you wanted to see the
+ * thumbnail version of  http://example.com/files/path/to/myimage.jpg you 
+ * would use http://example.com/files/imagecache/thumbnail/path/to/myimage.jpg
+ *
+ * ImageCache provides formatters for CCK Imagefields and is leveraged by several 
+ * other modules. ImageCache also relies heavily on ImageAPI for it's image processing.
+ * If there are errors with actual image processing look to ImageAPI first.
  * 
- * URLs are of the form: files/imagecache/<preset>/path
- * 
- * @todo: improve image resizing, reduce distortion.
  * @todo: add watermarking capabilities.
- * @todo: split action/handlers into their own little .inc files.
- * @todo: enforce permissions.
- * 
- * Notes:
- *   To add a new handler,
- *     add fields and select option to _imagecache_actions_form;
- *     add handling code to imagecache_cache
  * 
  */
 
