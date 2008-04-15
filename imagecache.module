@@ -542,9 +542,7 @@ function imagecache_field_formatter($field, $item, $formatter) {
     $item = array_merge($item,  _imagecache_file_load($item['fid']));
   }
 
-  $presetname = $formatter;
-  $presetname = preg_replace('/_linked$/', '', $presetname);
-  $presetname = preg_replace('/_imagelink$/', '', $presetname);
+  $presetname = preg_replace('/(_linked|_imagelink)$/', '', $formatter);
   if ($preset = imagecache_preset_by_name($presetname)) {
     return theme('imagecache_formatter', $field, $item, $presetname);
   }
