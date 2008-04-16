@@ -513,6 +513,14 @@ function imagecache_imagefield_file($op, $file) {
 
 /**
  * Implementation of hook_field_formatter_info().
+ *
+ * imagecache formatters are named as $presetname_$style
+ * $style is used to determine how the preset should be rendered.
+ * If you are implementing custom imagecache formatters please treat _ as
+ * reserved.
+ *
+ * @todo: move the linking functionality up to imagefield and clean up the default image
+ * integration.
  */
 function imagecache_field_formatter_info() {
   foreach (imagecache_presets() as $preset) {
@@ -528,6 +536,10 @@ function imagecache_field_formatter_info() {
       'label' => t('@preset as link to image', array('@preset' => $preset['presetname'])),
       'field types' => array('image'),
     );
+    $formatters[$preset['presetname'] .'_url'] = array(
+       'label' => t('url to @preset derivative', array('@preset' => $preset['presetname'])),
+       'field types' => array('image'),
+    );   
   }
   return $formatters;
 }
@@ -544,10 +556,32 @@ function imagecache_field_formatter($field, $item, $formatter) {
     $item = array_merge($item,  _imagecache_file_load($item['fid']));
   }
 
-  $presetname = preg_replace('/(_linked|_imagelink)$/', '', $formatter);
+
+  list($presetname, $style) = explode('_', $formatter);
+ 
+  $class = "imagecache imagecache-$presetname imagecache-$style imagecache-$formatter";
+  
   if ($preset = imagecache_preset_by_name($presetname)) {
-    return theme('imagecache_formatter', $field, $item, $presetname);
+    $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
+
+    switch($style) {
+      case 'linked':
+        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        return l($imagetag, 'node/'. $item['nid'], array('class' => $class), NULL, NULL, FALSE, TRUE); 
+    
+      case 'imagelink':
+        $original_image_url = file_create_url($item['filepath']);
+        return l($imagetag, $original_image_url, array('class' => $class), NULL, NULL, FALSE, TRUE);
+
+      case 'url':
+        return imagecache_create_url($presetname, $item['filepath']);
+
+      default:
+        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        return $imagetag;
+    }
   }
+  return '<!-- imagecache formatter preset not found('. $presetname .') not found! -->';
 }
 
 function _imagecache_file_load($fid = NULL) {
@@ -635,36 +669,32 @@ function _imagecache_recursive_delete($path) {
 }
 
 /**
- * Theme an img tag for displaying the image, with or without link.
+ * Create and image tag for an imagecache derivative
+ *
+ * @param $namespace
+ *   presetname of the derivative you wish to generate a tag for.
+ * @param $path
+ *   path to the original image you wish to create a derivative image tag for.
+ * @param $alt
+ *   img tag alternate text
+ * @param $title
+ *   img tag title text
+ * @param attributes
+ *   optional drupal attributes array. If attributes is set, the default imagecache classes 
+ *   will not be set automatically, you must do this manually.
  */
-function theme_imagecache_formatter($field, $item, $formatter) {
-  $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
-  if (preg_match('/_linked$/', $formatter)) {
-    $formatter = preg_replace('/_linked$/', '', $formatter);
-    $image = theme('imagecache', $formatter, $item['filepath'], $item['alt'], $item['title']);
-    $output = l($image, 'node/'. $item['nid'], array(), NULL, NULL, FALSE, TRUE);
-  }
-  else if (preg_match('/_imagelink$/', $formatter)) {
-    $formatter = preg_replace('/_imagelink$/', '', $formatter);
-    $output = theme('imagecache_imagelink', $formatter, $item['filepath'], $item['alt'], $item['title']);
-  }
-  else {
-    $output = theme('imagecache', $formatter, $item['filepath'], $item['alt'], $item['title']);
-  }
-  return $output;
-}
 
 function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  // check is_null so people can intentionally pass an empty array of attributes to override
+  // the defaults completely... if 
+  if (is_null($attributes)) {
+    $attributes['class'] = 'imagecache imagecache-'. $namespace;
+  } 
   $attributes = drupal_attributes($attributes);
-  $imagecache_path = imagecache_create_url($namespace, $path);
-  return '<img src="'. $imagecache_path .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
+  $imagecache_url = imagecache_create_url($namespace, $path);
+  return '<img src="'. $imagecache_url .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
 
-function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
-  $image = theme('imagecache', $namespace, $path, $alt, $title);
-  $original_image_url = file_create_url($path);
-  return l($image, $original_image_url, array(), NULL, NULL, FALSE, TRUE);
-}
 
 
 /************************************************************************************
