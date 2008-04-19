@@ -543,7 +543,7 @@ function imagecache_field_formatter_info() {
 /**
  * Implementation of hook_field_formatter().
  */
-function imagecache_field_formatter($field, $item, $formatter) {
+function imagecache_field_formatter($field, $item, $formatter, $node) {
   if (empty($item['fid']) && $field['use_default_image']) {
     $item = $field['default_image']; 
   }
@@ -563,7 +563,7 @@ function imagecache_field_formatter($field, $item, $formatter) {
     switch($style) {
       case 'linked':
         $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
-        return l($imagetag, 'node/'. $item['nid'], array('class' => $class), NULL, NULL, FALSE, TRUE); 
+        return l($imagetag, 'node/'. $node->nid, array('class' => $class), NULL, NULL, FALSE, TRUE); 
     
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
