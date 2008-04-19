@@ -264,7 +264,15 @@ function _imagecache_cache($presetname, $path) {
     imagecache_transfer($dst);
   }  
 
-  $src = file_create_path($path);
+  $src = $path;
+  
+  // check if the path to the file exists
+  if (!is_file($src)) {
+    // check if it is a file in the files dir if we couldn't find it.
+    $src = file_create_path($src);
+  };
+
+  // If the file doesn exist.. It could be an imagefield preview... 
   if (!is_file($src)) {
     // scan the session
     foreach ($_SESSION['imagefield'] as $fieldname => $files) {
@@ -291,6 +299,12 @@ function _imagecache_cache($presetname, $path) {
     }
     // otherwise send a 404.
     header("HTTP/1.0 404 Not Found");
+    exit;
+  }
+
+  // bail if the requested file isn't an image you can't just summon .php files etc...
+  if (!getimagesize($src)) {
+    header('HTTP/1.0 403 Forbidden');
     exit;
   }
 
