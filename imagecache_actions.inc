@@ -180,3 +180,58 @@ function imagecache_desaturate_image(&$image, $data = array()) {
   }
   return TRUE;
 }
+
+
+
+/**
+ * Imagecache Rotate 
+ */
+function imagecache_rotate_form($data) {
+  $form['degrees'] = array(
+    '#type' => 'textfield',
+    '#default_value' => (isset($data['degrees'])) ? $data['degrees'] : 0,
+    '#title' => t('Rotation angle'),
+    '#description' => t('The number of degrees the image should be rotated. Positive numbers are clockwise, negative are counter-clockwise.'),
+  );
+  $form['random'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => (isset($data['random'])) ? $data['random'] : 0,
+    '#title' => t('Randomize'),
+    '#description' => t('Randomize the rotation angle for each image. The angle specified above is used as a maximum.'),
+  );
+  $form['bgcolor'] = array(
+    '#type' => 'textfield',
+    '#default_value' => (isset($data['bgcolor'])) ? $data['bgcolor'] : '#FFFFFF',
+    '#title' => t('Background color'),
+    '#description' => t('The background color to use for exposed areas of the image. Use web-style hex colors (#FFFFFF for white, #000000 for black).'),
+  );
+  return $form;
+}
+
+function theme_imagecache_rotate($element) {
+  $output = t('degrees: ') . $element['#value']['degrees'] . ', ';
+  $output .= t('randomize: ') . (($element['#value']['random']) ? t('Yes') : t('No')) . ', ';
+  $output .= t('background: ') . $element['#value']['bgcolor'];
+  return $output;
+}
+
+function imagecache_rotate_image(&$image, $data) {
+  // Set sane default values.
+  $data['degrees'] = $data['degrees'] ? $data['degrees'] : 0;
+  $data['random'] = $data['random'] ? $data['random'] : FALSE;
+  $data['bgcolor'] = $data['bgcolor'] ? $data['bgcolor'] : '#FFFFFF';
+
+  // Manipulate the if we need to randomize, and convert to proper colors.
+  $data['bgcolor'] = '0x'. str_replace('#', '', $data['bgcolor']);
+
+  if (!empty($data['random'])) {
+	  $degrees = abs((float)$data['degrees']);
+	  $data['degrees'] = rand(-1 * $degrees, $degrees);
+  }
+
+  if (!imageapi_image_rotate($image, $data['degrees'], $data['bgcolor'])) {
+    watchdog('imagecache', t('imagecache_rotate_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return TRUE;
+}

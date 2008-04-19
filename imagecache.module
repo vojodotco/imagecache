@@ -72,42 +72,6 @@ function imagecache_menu($may_cache) {
   return $items;
 }
 
-
-/**
- * Implementation of hook_requirements().
- */
-function imagecache_requirements($phase) {
-  $requirements = array();
-  // Ensure translations don't break at install time.
-  $t = get_t();
-
-  if ($phase == 'runtime') {
-    // Check for an image library.
-    if (count(imageapi_get_available_toolkits()) == 0) {
-      $requirements['imageapi_toolkits'] = array(
-        'title' => $t('Image Toolkit'),
-        'value' => $t('No image toolkits available'),
-        'severity' => REQUIREMENT_ERROR,
-        'description' => $t('Imagecache requires an imagetoolkit such as <a href="http://php.net/gd">GD2</a> or <a href="http://www.imagemagick.org">Imagemagick</a> be installed on your server.'),
-      );
-    }
-    // Check for JPEG/PNG/GIF support.
-    if ('gd' == image_get_toolkit()) {
-      foreach (array('gif', 'jpeg', 'png') as $format) {
-        if (!function_exists('imagecreatefrom'. $format)) {
-          $requirements['gd_'. $format] = array(
-            'title' => $t('GD !format Support', array('!format' => drupal_ucfirst($format))),
-            'value' => $t('Not installed'),
-            'severity' => REQUIREMENT_INFO,
-            'description' => $t('PHP was not compiled with %format support. Imagecache will not be able to process %format images.', array('%format' => $format)), 
-          );
-        }
-      } 
-    }
-  }
-  return $requirements;
-}
-
 /**
  * Implementation of hook_imagecache_actions.
  *
@@ -150,6 +114,11 @@ function imagecache_imagecache_actions() {
     'imagecache_desaturate' => array(
       'name' => 'Desaturate',
       'description' => 'Convert an image to grey scale.',
+      'file' => 'imagecache_actions.inc',
+    ),
+    'imagecache_rotate' => array(
+      'name' => 'Rotate',
+      'description' => 'Rotate an image.',
       'file' => 'imagecache_actions.inc',
     ),
   );
@@ -536,6 +505,10 @@ function imagecache_field_formatter_info() {
       'label' => t('@preset as link to image', array('@preset' => $preset['presetname'])),
       'field types' => array('image'),
     );
+    $formatters[$preset['presetname'] .'_path'] = array(
+       'label' => t('path to @preset derivative', array('@preset' => $preset['presetname'])),
+       'field types' => array('image'),
+    );   
     $formatters[$preset['presetname'] .'_url'] = array(
        'label' => t('url to @preset derivative', array('@preset' => $preset['presetname'])),
        'field types' => array('image'),
@@ -576,12 +549,14 @@ function imagecache_field_formatter($field, $item, $formatter) {
       case 'url':
         return imagecache_create_url($presetname, $item['filepath']);
 
+      case 'path':
+        return imagecache_create_path($presetname, $item['filepath']);
+
       default:
-        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
-        return $imagetag;
+        return  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
     }
   }
-  return '<!-- imagecache formatter preset not found('. $presetname .') not found! -->';
+  return '<!-- imagecache formatter preset('. $presetname .') not found! -->';
 }
 
 function _imagecache_file_load($fid = NULL) {
