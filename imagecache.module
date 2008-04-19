@@ -280,6 +280,7 @@ function _imagecache_cache($presetname, $path) {
         foreach ($files as $delta => $file) {
           if ($file['preview'] != $src) continue;
           $dst = tempnam(file_directory_temp(), 'imagecache.preview');
+          register_shutdown_function('file_delete', realpath($dst));
           if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
             // Generate an error if image could not generate.
             watchdog('imagecache', t('Failed generating a preview image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $presetname)), WATCHDOG_ERROR);
@@ -287,7 +288,6 @@ function _imagecache_cache($presetname, $path) {
             exit;
           }
           imagecache_transfer($dst);
-          unlink($dst);
         }
       }
     }
@@ -309,7 +309,7 @@ function _imagecache_cache($presetname, $path) {
     exit;
   }
 
-  $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src) ;
+  $lockfile = realpath(file_directory_temp() .'/'. $preset['presetname'] . basename($src));
   if (file_exists($lockfile)) {
     watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile)), WATCHDOG_NOTICE);
     // send a response code that will make the browser wait and reload in a 1/2 sec. 
