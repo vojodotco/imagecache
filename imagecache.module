@@ -653,17 +653,15 @@ function _imagecache_keyword_filter($value, $current_pixels, $new_pixels) {
  * @param string $path
  *   A filepath relative to file_directory_path.
  */
-function _imagecache_recursive_delete($path) {
-  $listing = $path .'/*';
-  foreach (glob($listing) as $file) {
-    if (is_file($file) === TRUE) {
-      @unlink($file);
-    }
-    elseif (is_dir($file) === TRUE) {
-      _imagecache_recursive_delete($file);
-    }
+function _imagecache_recursive_delete($dir) {
+  $d = dir($dir);
+  while (($entry = $d->read()) !== FALSE) {
+    if ($entry == '.' || $entry == '..') continue;
+    $path = $dir .'/'. $entry;
+    if (is_file($path)) unlink($path);
+    if (is_dir($path)) _imagecache_recursive_delete($path);
   }
-  @rmdir($path);
+  rmdir($dir);
 }
 
 /**
