@@ -274,10 +274,11 @@ function _imagecache_cache($presetname, $path) {
 
   // If the file doesn exist.. It could be an imagefield preview... 
   if (!is_file($src)) {
-    // scan the session
-    foreach ($_SESSION['imagefield'] as $fieldname => $files) {
-      foreach ($files as $delta => $file) {
-        if ($file['preview'] == $src) {
+    // scan for imagefield previews 
+    if (!empty($_SESSION['imagefield'])) {
+      foreach ($_SESSION['imagefield'] as $fieldname => $files) {
+        foreach ($files as $delta => $file) {
+          if ($file['preview'] != $src) continue;
           $dst = tempnam(file_directory_temp(), 'imagecache.preview');
           if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
             // Generate an error if image could not generate.
