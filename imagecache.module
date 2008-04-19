@@ -280,6 +280,10 @@ function _imagecache_cache($presetname, $path) {
         foreach ($files as $delta => $file) {
           if ($file['preview'] != $src) continue;
           $dst = tempnam(file_directory_temp(), 'imagecache.preview');
+          // by the time shutdown functions are being called
+          // the cwd has changed from document root, to server root
+          // so absolute paths must be used for files in shutdown 
+          // functions.
           register_shutdown_function('file_delete', realpath($dst));
           if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
             // Generate an error if image could not generate.
@@ -309,7 +313,7 @@ function _imagecache_cache($presetname, $path) {
     exit;
   }
 
-  $lockfile = realpath(file_directory_temp() .'/'. $preset['presetname'] . basename($src));
+  $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src);
   if (file_exists($lockfile)) {
     watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile)), WATCHDOG_NOTICE);
     // send a response code that will make the browser wait and reload in a 1/2 sec. 
@@ -318,7 +322,11 @@ function _imagecache_cache($presetname, $path) {
   }
   touch($lockfile);
   // register the shtdown function to clean up lock files.
-  register_shutdown_function('file_delete', $lockfile);
+  // by the time shutdown functions are being called
+  // the cwd has changed from document root, to server root
+  // so absolute paths must be used for files in shutdown 
+  // functions.
+  register_shutdown_function('file_delete', realpath($lockfile));
 
   // check if deriv exists... (file was created between apaches request handler and reaching this code)
   // otherwise try to create the derivative. 
