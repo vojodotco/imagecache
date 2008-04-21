@@ -67,15 +67,7 @@ function imagecache_ui_menu($may_cache) {
       'callback arguments' => array('imagecache_ui_preset_form', arg(4)),
       'type' => MENU_CALLBACK,
     );
-/*
-    $items[] = array(
-      'path' => 'admin/build/imagecache/preset/'. arg(4) .'/action/add',
-      'title' =>  t('Add !action to !presetname', $t),
-      'callback' => 'imagecache_ui_action_add_list',
-      'callback arguments' => array(arg(4)),
-      'type' => MENU_CALLBACK,
-    );
-*/
+
     $definition = imagecache_action_definition(arg(7));
     if (!empty($definition)) {
       $t['!action'] = $definition['name'];
@@ -230,7 +222,7 @@ function imagecache_ui_preset_flush_form_submit($form_id, $form_values) {
 
 
 function imagecache_ui_preset_form($presetid) {
-  $preset = imagecache_preset($presetid, TRUE);
+  $preset = imagecache_preset($presetid, true);
 
   if (!$preset) {
     drupal_set_message(t('The specified preset was not found'), 'error');
@@ -254,12 +246,12 @@ function imagecache_ui_preset_form($presetid) {
   $form['actions'] = array(
     '#type' => 'fieldset',
     '#title' => t('Actions'),
-    '#tree' => TRUE,
+    '#tree' => true,
     '#theme' => 'imagecache_ui_preset_actions',
   );
 
 
-  foreach($preset['actions'] as $i => $action) {
+  foreach ($preset['actions'] as $i => $action) {
     // skip unknown actions...
     if (!$definition = imagecache_action_definition($action['action'])) {
       continue;
@@ -304,11 +296,11 @@ function imagecache_ui_preset_form($presetid) {
   }  
  
   $form['actions']['new'] = array(
-    '#tree' => FALSE,
+    '#tree' => false,
     '#type' => 'fieldset',
     '#title' => t('New Actions'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsible' => true,
+    '#collapsed' => true,
   );
   
    
@@ -329,8 +321,8 @@ function imagecache_ui_preset_form($presetid) {
     
   $form['files'] = array(
     '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsible' => true,
+    '#collapsed' => true,
     '#title' =>  t('Error Files'),
   );
 
@@ -409,7 +401,7 @@ function imagecache_ui_action_form($actionid) {
   }
   
   $form = array(
-    '#tree' => TRUE,
+    '#tree' => true,
   );
 
   $form['actionid'] = array(
@@ -475,7 +467,7 @@ function imagecache_ui_action_add_form($presetid, $actionname) {
   $definition = imagecache_action_definition($actionname);
   
   $form = array(
-    '#tree' => TRUE,
+    '#tree' => true,
   );
   $form['action'] = array(
     '#type' => 'value',

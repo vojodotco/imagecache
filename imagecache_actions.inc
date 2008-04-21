@@ -26,10 +26,10 @@ function imagecache_scale_image(&$image, $data) {
   $data['width'] = $data['width'] ? $data['width'] : 9999999;
   $data['height'] = $data['height'] ? $data['height'] : 9999999;
   if (!imageapi_image_scale($image, $data['width'], $data['height'], $data['upscale'])) {
-    watchdog('imagecache', t('imagecache_scale_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+    watchdog('imagecache', t('imagecache_scale_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -50,10 +50,10 @@ function imagecache_scale_and_crop_image(&$image, $data) {
   $data['width'] = $data['width'] ? $data['width'] : 9999999;
   $data['height'] = $data['height'] ? $data['height'] : 9999999;
   if (!imageapi_image_scale_and_crop($image, $data['width'], $data['height'])) {
-    watchdog('imagecache', t('imagecache_scale_and_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+    watchdog('imagecache', t('imagecache_scale_and_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -108,10 +108,10 @@ function imagecache_deprecated_scale_image(&$image, $data) {
   $data['width'] = $data['width'] ? $data['width'] : 9999999;
   $data['height'] = $data['height'] ? $data['height'] : 9999999;
   if (!imageapi_image_scale($image, $data['width'], $data['height'])) {
-     watchdog('imagecache', t('imagecache_deprecated_scale failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+     watchdog('imagecache', t('imagecache_deprecated_scale failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -154,10 +154,10 @@ function theme_imagecache_crop($element) {
 
 function imagecache_crop_image(&$image, $data) {
   if (!imageapi_image_crop($image, $data['xoffset'], $data['yoffset'], $data['width'], $data['height'])) {
-      watchdog('imagecache', t('imagecache_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+      watchdog('imagecache', t('imagecache_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -175,10 +175,10 @@ function theme_imagecache_desaturate($element) {
 
 function imagecache_desaturate_image(&$image, $data = array()) {
   if (!imageapi_image_desaturate($image)) {
-    watchdog('imagecache', t('imagecache_desaturate failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+    watchdog('imagecache', t('imagecache_desaturate failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -218,7 +218,7 @@ function theme_imagecache_rotate($element) {
 function imagecache_rotate_image(&$image, $data) {
   // Set sane default values.
   $data['degrees'] = $data['degrees'] ? $data['degrees'] : 0;
-  $data['random'] = $data['random'] ? $data['random'] : FALSE;
+  $data['random'] = $data['random'] ? $data['random'] : false;
   $data['bgcolor'] = $data['bgcolor'] ? $data['bgcolor'] : '#FFFFFF';
 
   // Manipulate the if we need to randomize, and convert to proper colors.
@@ -230,8 +230,8 @@ function imagecache_rotate_image(&$image, $data) {
   }
 
   if (!imageapi_image_rotate($image, $data['degrees'], $data['bgcolor'])) {
-    watchdog('imagecache', t('imagecache_rotate_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE))), WATCHDOG_ERROR);
-    return FALSE;
+    watchdog('imagecache', t('imagecache_rotate_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    return false;
   }
-  return TRUE;
+  return true;
 }
