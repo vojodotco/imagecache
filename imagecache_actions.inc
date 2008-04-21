@@ -209,8 +209,8 @@ function imagecache_rotate_form($data) {
 }
 
 function theme_imagecache_rotate($element) {
-  $output = t('degrees: ') . $element['#value']['degrees'] . ', ';
-  $output .= t('randomize: ') . (($element['#value']['random']) ? t('Yes') : t('No')) . ', ';
+  $output = t('degrees: ') . $element['#value']['degrees'] .', ';
+  $output .= t('randomize: ') . (($element['#value']['random']) ? t('Yes') : t('No')) .', ';
   $output .= t('background: ') . $element['#value']['bgcolor'];
   return $output;
 }
@@ -225,8 +225,8 @@ function imagecache_rotate_image(&$image, $data) {
   $data['bgcolor'] = '0x'. str_replace('#', '', $data['bgcolor']);
 
   if (!empty($data['random'])) {
-	  $degrees = abs((float)$data['degrees']);
-	  $data['degrees'] = rand(-1 * $degrees, $degrees);
+    $degrees = abs((float)$data['degrees']);
+    $data['degrees'] = rand(-1 * $degrees, $degrees);
   }
 
   if (!imageapi_image_rotate($image, $data['degrees'], $data['bgcolor'])) {

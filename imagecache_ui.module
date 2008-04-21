@@ -7,7 +7,7 @@
  */
 
 function imagecache_ui_help($section) {
-  switch($section) {
+  switch ($section) {
     case 'admin/build/imagecache': return t('Manage imagecache preset.');
   }
 }
@@ -118,14 +118,14 @@ function imagecache_ui_menu($may_cache) {
 function imagecache_ui_presets() {
   $header = array(t('Preset Name'), t('Actions'));
   $rows = array();
-  foreach(imagecache_presets() as $preset) {
+  foreach (imagecache_presets() as $preset) {
     $row = array(); 
     $row[] = l($preset['presetname'], 'admin/build/imagecache/preset/'. $preset['presetid']);
     $links = array();
     $links[] = l(t('edit'), 'admin/build/imagecache/preset/'. $preset['presetid']);
-    $links[] = l(t('remove'),'admin/build/imagecache/preset/'. $preset['presetid'] .'/delete');
-    $links[] = l(t('flush'),'admin/build/imagecache/preset/'. $preset['presetid'] .'/flush' );
-    $row[] = implode ('&nbsp;&nbsp;&nbsp;&nbsp;', $links);
+    $links[] = l(t('remove'), 'admin/build/imagecache/preset/'. $preset['presetid'] .'/delete');
+    $links[] = l(t('flush'), 'admin/build/imagecache/preset/'. $preset['presetid'] .'/flush' );
+    $row[] = implode('&nbsp;&nbsp;&nbsp;&nbsp;', $links);
     $rows[] = $row;
   }
   $output = theme('table', $header, $rows);
@@ -261,7 +261,7 @@ function imagecache_ui_preset_form($presetid) {
 
   foreach($preset['actions'] as $i => $action) {
     // skip unknown actions...
-    if(!$definition = imagecache_action_definition($action['action'])) {
+    if (!$definition = imagecache_action_definition($action['action'])) {
       continue;
     }
     $action_name =  t($definition['name']);
@@ -312,7 +312,7 @@ function imagecache_ui_preset_form($presetid) {
   );
   
    
-  foreach(imagecache_action_definitions() as $action => $definition) {
+  foreach (imagecache_action_definitions() as $action => $definition) {
     $form['actions']['new'][] = array(
       '#type' => 'markup',
       '#prefix' => '<div>',
@@ -365,13 +365,13 @@ function imagecache_ui_preset_form($presetid) {
 
 
 function theme_imagecache_admin_title($element) {
-  return '<h2>'.$element['value'].'</h2>';
+  return '<h2>'. $element['value'] .'</h2>';
 }
 
 function theme_imagecache_ui_preset_actions($element) {
-  $header = array(t('Action'), t('Settings'), t('Weight'), '','');
+  $header = array(t('Action'), t('Settings'), t('Weight'), '', '');
   $rows = array();
-  foreach(element_children($element) as $key) {
+  foreach (element_children($element) as $key) {
     $row = array();
     $row[] = drupal_render($element[$key]['name']);
     $row[] = drupal_render($element[$key]['settings']);
@@ -387,7 +387,7 @@ function theme_imagecache_ui_preset_actions($element) {
 
 function imagecache_ui_preset_form_submit($form_id, $form_values) {
   if (isset($form_values['actions'])) {
-    foreach($form_values['actions'] as $action) {
+    foreach ($form_values['actions'] as $action) {
       imagecache_action_save($action);
     }
   }

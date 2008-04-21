@@ -72,7 +72,7 @@ function imagecache_requirements($phase) {
 function _imagecache_return_bytes($val) {
     $val = trim($val);
     $last = strtolower($val{strlen($val)-1});
-    switch($last) {
+    switch ($last) {
         // The 'G' modifier is available since PHP 5.1.0
         case 'g':
             $val *= 1024;
@@ -129,7 +129,8 @@ function imagecache_install() {
 
   if ($ret1 && $ret2) {
     drupal_set_message(t('Imagecache module installed succesfully.'));
-  } else {
+  } 
+  else {
     drupal_set_message(t('Imagecache module installation was unsuccessfull. Necessary database tables should be created by hand.', 'error'));
   }
   return $ret;
@@ -231,7 +232,7 @@ function imagecache_update_4() {
 
   // unserialize what we can.
   $result = db_query("SELECT * FROM {imagecache_action}");
-  while($row = db_fetch_array($result)) {
+  while ($row = db_fetch_array($result)) {
     $data = unserialize($row['data']);
     // Keep scale and crop and the old scale function seperate... I don't really want to break BC with 
     // the 2.x update. We'll deprecate this version.

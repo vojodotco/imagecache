@@ -40,7 +40,7 @@
  */
 function imagecache_perm() {
   $perms =  array('administer imagecache', 'flush imagecache');
-  foreach(imagecache_presets() as $preset) {
+  foreach (imagecache_presets() as $preset) {
     $perms[] =  'view imagecache '. $preset['presetname'];
   }
   return $perms;
@@ -143,7 +143,7 @@ function imagecache_action_definitions($reset = FALSE) {
       $actions = unserialize($cache->data);
     }
     else {
-      foreach(module_implements('imagecache_actions') as $module) {
+      foreach (module_implements('imagecache_actions') as $module) {
         foreach (module_invoke($module, 'imagecache_actions') as $key => $action) {
           $action['module'] = $module;
           if ($action['file']) {
@@ -492,7 +492,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
   
 
 function imagecache_imagefield_file($op, $file) {
-  switch($op) {
+  switch ($op) {
     // Delete imagecache presets when imagecache images are deleted.
     case 'delete': imagecache_image_flush($file['filepath']); break;
 
@@ -560,7 +560,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   if ($preset = imagecache_preset_by_name($presetname)) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
 
-    switch($style) {
+    switch ($style) {
       case 'linked':
         $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
         return l($imagetag, 'node/'. $node->nid, array('class' => $class), NULL, NULL, FALSE, TRUE); 
