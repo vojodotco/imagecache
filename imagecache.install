@@ -22,7 +22,7 @@ function imagecache_requirements($phase) {
   if ($phase == 'runtime') {
     $memory_limit = ini_get('memory_limit');
     
-    if (_imagecache_return_bytes($memory_limit) < _imagecache_return_bytes('96M')) {
+    if (parse_size($memory_limit) < parse_size('96M')) {
       $requirements['imagecache_memory_limit'] = array(
         'title' => $t('ImageCache PHP Memory Limit'),
         'value' => $memory_limit,
@@ -67,24 +67,6 @@ function imagecache_requirements($phase) {
   }
   return $requirements;
 }
-
-// convert php settings value to bytes.
-function _imagecache_return_bytes($val) {
-    $val = trim($val);
-    $last = strtolower($val{strlen($val)-1});
-    switch ($last) {
-        // The 'G' modifier is available since PHP 5.1.0
-        case 'g':
-            $val *= 1024;
-        case 'm':
-            $val *= 1024;
-        case 'k':
-            $val *= 1024;
-    }
-
-    return $val;
-}
-
 
 function imagecache_install() {
   switch ($GLOBALS['db_type']) {
