@@ -567,6 +567,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
+        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
         return l($imagetag, $original_image_url, array('class' => $class), null, null, false, true);
 
       case 'url':
