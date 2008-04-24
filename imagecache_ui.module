@@ -17,7 +17,7 @@ function imagecache_ui_menu($may_cache) {
   if ($may_cache) {
     $items[] = array( 
       'path' => 'admin/build/imagecache',
-      'title' => t('Imagecache Presets'),
+      'title' => t('Imagecache'),
       'description' => t('Administer imagecache presets and actions.'),
       'callback' => 'imagecache_ui_presets',
       'access' => user_access('administer imagecache'),

@@ -216,8 +216,8 @@ function imagecache_update_4() {
   $result = db_query("SELECT * FROM {imagecache_action}");
   while ($row = db_fetch_array($result)) {
     $data = unserialize($row['data']);
-    // Keep scale and crop and the old scale function seperate... I don't really want to break BC with 
-    // the 2.x update. We'll deprecate this version.
+
+    // remove function from data if present;
     $function = $data['function'];
     unset($data['function']);
     $data = serialize($data);

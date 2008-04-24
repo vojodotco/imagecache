@@ -46,9 +46,6 @@ function theme_imagecache_scale_and_crop($element) {
 
 
 function imagecache_scale_and_crop_image(&$image, $data) {
-   // Set impossibly large values if the width and height aren't set.
-  $data['width'] = $data['width'] ? $data['width'] : 9999999;
-  $data['height'] = $data['height'] ? $data['height'] : 9999999;
   if (!imageapi_image_scale_and_crop($image, $data['width'], $data['height'])) {
     watchdog('imagecache', t('imagecache_scale_and_crop failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
     return false;

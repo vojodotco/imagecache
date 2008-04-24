@@ -460,7 +460,6 @@ function imagecache_build_derivative($actions, $src, $dst) {
     return false; 
   }
 
-
   foreach ($actions as $action) {
     if (!empty($action['data'])) {
       // QuickSketch, why do these run first/twice? - dopry.
@@ -486,6 +485,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
     }
     return false;
   }
+
   return true;
 }
 
