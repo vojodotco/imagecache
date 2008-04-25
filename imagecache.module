@@ -553,13 +553,14 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   }
 
 
-  list($presetname, $style) = explode('_', $formatter);
+  $parts =  explode('_', $formatter);
+  $style = array_pop($parts);
+  $presetname = implode('_', $parts);
  
   $class = "imagecache imagecache-$presetname imagecache-$style imagecache-$formatter";
   
   if ($preset = imagecache_preset_by_name($presetname)) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
-
     switch ($style) {
       case 'linked':
         $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);

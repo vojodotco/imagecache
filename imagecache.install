@@ -201,6 +201,7 @@ function imagecache_update_3() {
 
 function imagecache_update_4() {
   $ret = array();
+  module_enable(array('imageapi'));
 
    // add action column to the imagecache_action table just becuase serialization bugs me.
    switch ($GLOBALS['db_type']) {
