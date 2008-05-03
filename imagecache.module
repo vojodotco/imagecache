@@ -516,7 +516,7 @@ function imagecache_imagefield_file($op, $file) {
  */
 function imagecache_field_formatter_info() {
   foreach (imagecache_presets() as $preset) {
-    $formatters[$preset['presetname']] = array(
+    $formatters[$preset['presetname'] .'_default'] = array(
       'label' => $preset['presetname'],
       'field types' => array('image'),
     );
