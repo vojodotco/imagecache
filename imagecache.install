@@ -104,8 +104,8 @@ function imagecache_install() {
             data TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (actionid));
       ");
-      db_query("CREATE SEQUENCE imagecache_preset_presetid_seq INCREMENT 1 START 1;");
-      db_query("CREATE SEQUENCE imagecache_action_actionid_seq INCREMENT 1 START 1;");
+      db_query("CREATE SEQUENCE {imagecache_preset}_presetid_seq INCREMENT 1 START 1;");
+      db_query("CREATE SEQUENCE {imagecache_action}_actionid_seq INCREMENT 1 START 1;");
       break;
   }
 
