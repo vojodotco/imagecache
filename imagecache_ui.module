@@ -15,7 +15,7 @@ function imagecache_ui_help($path, $arg) {
 function imagecache_ui_menu() {
   $items = array();
   $items['admin/build/imagecache'] = array(
-    'title' => 'Imagecache Presets',
+    'title' => 'Imagecache',
     'description' => 'Administer imagecache presets and actions.',
     'page callback' => 'imagecache_ui_presets',
     'access arguments' => array('administer imagecache'),
