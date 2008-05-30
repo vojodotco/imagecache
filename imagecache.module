@@ -424,34 +424,6 @@ function _imagecache_cache_set_cache_headers($fileinfo, &$headers) {
 }
 
 /**
- * A recursive mkdir.
- */
-function _imagecache_mkdir($dir) {
-  $folders = explode('/', $dir);
-
-  foreach ($folders as $folder) {
-    $dirs[] = $folder;
-    $path = implode('/', $dirs);
-    if (is_dir($path)) {
-      continue;
-    }
-    if (is_file($path)) {
-      watchdog('imagecache', t('file exists where we would like a directory: %path', array('%path' => $path)), WATCHDOG_ERROR);
-      return false;
-    } 
-    if (!@mkdir($path)) {
-      watchdog('imagecache', t('Could not create destination: %dir halted at: %path', array('%dir' => $dir, '%path' => $path)), WATCHDOG_ERROR);
-      return false;
-    }
-    if (!@chmod($path, 0775)) {
-      watchdog('imagecache', t('Could not set permissons on created directory: %dir halted at: %path', array('%dir' => $dir, '%path' => $path)), WATCHDOG_ERROR);
-      return false;
-    } 
-  }
-  return true;
-}
- 
-/**
  * build an image cache derivative
  * 
  * @param $actions  Array of imagecache actions.
@@ -465,7 +437,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
   $dir = dirname($dst);
 
   // Build the destination folder tree if it doesn't already exists.
-  if (!file_check_directory($dir) && !_imagecache_mkdir($dir)) {
+  if (!file_check_directory($dir) && !mkdir($dir, 0775, true)) {
     watchdog('imagecache', t('Failed to create imagecache directory: %dir', array('%dir' => $dir)), WATCHDOG_ERROR);
     return false;
   }
@@ -562,17 +534,15 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item = $field['default_image']; 
   }
   // Views does not load the file for us, while CCK display fields does.
-  if (!isset($item['filepath'])) {
-    $item = array_merge($item,  _imagecache_file_load($item['fid']));
+  if (empty($item['filepath'])) {
+    $item = array_merge($item,  _imagefield_file_load($item['fid']));
   }
-
 
   $parts =  explode('_', $formatter);
   $style = array_pop($parts);
   $presetname = implode('_', $parts);
  
   $class = "imagecache imagecache-$presetname imagecache-$style imagecache-$formatter";
-  
   if ($preset = imagecache_preset_by_name($presetname)) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
     switch ($style) {
@@ -597,16 +567,6 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   }
   return '<!-- imagecache formatter preset('. $presetname .') not found! -->';
 }
-
-function _imagecache_file_load($fid = null) {
-  // Don't bother if we weren't passed an fid.
-  if (isset($fid) && is_numeric($fid)) {
-    $result = db_query('SELECT * FROM {files} WHERE fid = %d', $fid);
-    $file = db_fetch_array($result);
-  }
-  return ($file) ? $file : array();
-}
-
 
 /**
  * Filter key word values such as 'top', 'right', 'center', and also percentages.
@@ -746,11 +706,9 @@ function theme_imagecache_resize($element) {
 /**
  *  ImageCache 2.x API
  *
- *  The API for imagecache has changed. There is a compatibility layer for 
- *  imagecache 1.x. Please see the imagecache_compat.module
- * 
- *  The 2.x API returns more structured data, has shorter function names, and 
- *  implements more aggressive metadata caching.
+ *  The API for imagecache has changed.  The 2.x API returns more structured 
+ *  data, has shorter function names, and implements more aggressive metadata 
+ *  caching.
  *
  */
 
