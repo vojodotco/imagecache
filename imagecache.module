@@ -49,40 +49,114 @@ function imagecache_perm() {
 /**
  * Implementation of hook_menu().
  */
-function imagecache_menu($may_cache) {
+function imagecache_menu() {
   $items = array();
-  if ($may_cache) {
 
-    // standard imagecache callback.
-    $items[] = array(
-      'path' => file_directory_path() .'/imagecache', 
-      'callback' => 'imagecache_cache',
-      'access' => true,
-      'type' => MENU_CALLBACK
-    );
+  // standard imagecache callback.
+  $items[file_directory_path() .'/imagecache'] = array(
+    'page callback' => 'imagecache_cache',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK
+  );
+  // private downloads imagecache callback
+  $items['system/files/imagecache'] = array(
+    'page callback' => 'imagecache_cache_private',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK
+  );
 
-    // private downloads imagecache callback 
-    $items[] = array( 
-      'path' => 'system/files/imagecache',
-      'callback' => 'imagecache_cache_private',
-      'access' => true,
-      'type' => MENU_CALLBACK
-    );     
-  }
   return $items;
+}
+
+
+/**
+ * Implementation of hook_theme().
+ */
+function imagecache_theme() {
+  $theme = array(
+    'imagecache' => array(
+      'arguments' => array(
+        'namespace' => NULL,
+        'path' => NULL,
+        'alt' => NULL,
+        'title' => NULL,
+    )),
+    'imagecache_imagelink' => array(
+      'arguments' => array(
+        'namespace' => NULL,
+        'path' => NULL,
+        'alt' => NULL,
+        'title' => NULL,
+        'attributes' => array(),
+    )),
+    'imagecache_resize' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_scale' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_scale_and_crop' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_deprecated_scale' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_crop' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_desaturate' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+    'imagecache_rotate' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
+  );
+
+  foreach (imagecache_presets() as $preset) {
+    $theme['imagecache_formatter_'. $preset['presetname'] .'_default'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagecache_formatter',
+    );
+    $theme['imagecache_formatter_'. $preset['presetname'] .'_linked'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagecache_formatter',
+    );
+    $theme['imagecache_formatter_'. $preset['presetname'] .'_imagelink'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagecache_formatter',
+    );
+    $theme['imagecache_formatter_'. $preset['presetname'] .'_path'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagecache_formatter',
+    );
+    $theme['imagecache_formatter_'. $preset['presetname'] .'_url'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_imagecache_formatter',
+    );
+  }
+
+  return $theme;
+
 }
 
 /**
  * Implementation of hook_imagecache_actions.
  *
  * @return array
- *   An array of information on the actions implemented by a module. The array contains a 
- *   sub-array for each action node type, with the machine-readable action name as the key. 
- *   Each sub-array has up to 3 attributes. Possible attributes:
- * 
+ *   An array of information on the actions implemented by a module. The array
+ *   contains a sub-array for each action node type, with the machine-readable
+ *   action name as the key. Each sub-array has up to 3 attributes. Possible 
+ *   attributes:
+ *
  *     "name": the human-readable name of the action. Required.
  *     "description": a brief description of the action. Required.
- *     "file": the name of the include file the action can be found 
+ *     "file": the name of the include file the action can be found
  *             in relative to the implementing module's path.
  */
 function imagecache_imagecache_actions() {
@@ -140,20 +214,20 @@ function imagecache_action_definitions($reset = false) {
   static $actions;
   if (!isset($actions) || $reset) {
     if (!$reset && ($cache = cache_get('imagecache_actions')) && !empty($cache->data)) {
-      $actions = unserialize($cache->data);
+      $actions = $cache->data;
     }
     else {
       foreach (module_implements('imagecache_actions') as $module) {
         foreach (module_invoke($module, 'imagecache_actions') as $key => $action) {
           $action['module'] = $module;
-          if ($action['file']) {
+          if (!empty($action['file'])) {
             $action['file'] = drupal_get_path('module', $action['module']) .'/'. $action['file'];
           }
           $actions[$key] = $action;
         };
       }
       uasort($actions, '_imagecache_definitions_sort');
-      cache_set('imagecache_actions', 'cache', serialize($actions));
+      cache_set('imagecache_actions', $actions);
     }
   }
   return $actions;
@@ -197,12 +271,7 @@ function imagecache_action_definition($action) {
  */
 function imagecache_create_url($presetname, $path) {
   $path = _imagecache_strip_file_directory($path);
-  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
-    case FILE_DOWNLOADS_PUBLIC:
-      return url(file_directory_path() .'/imagecache/'. $presetname .'/'. $path, NULL, NULL, TRUE);
-    case FILE_DOWNLOADS_PRIVATE:
-      return url('system/files/imagecache/'. $presetname .'/'. $path, NULL, NULL, TRUE);
-  }
+  return file_create_url(file_directory_path() .'/imagecache/'. $presetname .'/'. $path);
 }
 
 /**
@@ -228,7 +297,7 @@ function _imagecache_strip_file_directory($path) {
 }
 
 
-/** 
+/**
  * callback for handling public files imagecache requests.
  */
 function imagecache_cache() {
@@ -248,7 +317,7 @@ function imagecache_cache_private() {
 
   if (user_access('view imagecache '. $preset)) {
     _imagecache_cache($preset, $source);
-  } 
+  }
   else {
     // if there is a 403 image, display it.
     $accesspath = file_create_path('imagecache/'. $preset .'.403.png');
@@ -262,21 +331,22 @@ function imagecache_cache_private() {
 }
 
 /**
- * handle request validation and responses to imagecache requests. 
+ * handle request validation and responses to imagecache requests.
  */
 function _imagecache_cache($presetname, $path) {
   if (!$preset = imagecache_preset_by_name($presetname)) {
-    // send a 404 if we dont' know of a preset. 
-    header('HTTP/1.0 404 Not Found');
+    // Send a 404 if we don't know of a preset.
+    header("HTTP/1.0 404 Not Found");
     exit;
   }
 
   // umm yeah deliver it early if it is there. especially useful
-  // to prevent lock files from being created when delivering private files. 
+  // to prevent lock files from being created when delivering private files.
   $dst = imagecache_create_path($preset['presetname'], $path);
   if (file_exists($dst)) {
     imagecache_transfer($dst);
-  }  
+  }
+
 
   $src = $path;
   
@@ -290,9 +360,10 @@ function _imagecache_cache($presetname, $path) {
   if (!is_file($src)) {
     // scan for imagefield previews 
     if (!empty($_SESSION['imagefield'])) {
-      foreach ($_SESSION['imagefield'] as $fieldname => $files) {
+      foreach ((array) $_SESSION['imagefield'] as $fieldname => $files) {
         foreach ($files as $delta => $file) {
           if ($file['preview'] != $src) continue;
+
           $dst = tempnam(file_directory_temp(), 'imagecache.preview');
           // by the time shutdown functions are being called
           // the cwd has changed from document root, to server root
@@ -301,15 +372,15 @@ function _imagecache_cache($presetname, $path) {
           register_shutdown_function('file_delete', realpath($dst));
           if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
             // Generate an error if image could not generate.
-            watchdog('imagecache', t('Failed generating a preview image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $presetname)), WATCHDOG_ERROR);
-            header('HTTP/1.0 500 Internal Server Error');
+            watchdog('imagecache', 'Failed generating a preview image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $presetname), WATCHDOG_ERROR);
+            header("HTTP/1.0 500 Internal Server Error");
             exit;
           }
           imagecache_transfer($dst);
         }
       }
     }
-  
+
     // if there is a 404 image uploaded for the preset display it.
     $notfoundpath = file_create_path('imagecache/'. $preset['presetname'] .'.404.png');
     if (file_exists($notfoundpath)) {
@@ -329,8 +400,8 @@ function _imagecache_cache($presetname, $path) {
 
   $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src);
   if (file_exists($lockfile)) {
-    watchdog('imagecache', t('Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile)), WATCHDOG_NOTICE);
-    // send a response code that will make the browser wait and reload in a 1/2 sec. 
+    watchdog('imagecache', 'Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile), WATCHDOG_NOTICE);
+    // send a response code that will make the browser wait and reload in a 1/2 sec.
     // header()
     exit;
   }
@@ -343,24 +414,24 @@ function _imagecache_cache($presetname, $path) {
   register_shutdown_function('file_delete', realpath($lockfile));
 
   // check if deriv exists... (file was created between apaches request handler and reaching this code)
-  // otherwise try to create the derivative. 
+  // otherwise try to create the derivative.
   if (!file_exists($dst) && !imagecache_build_derivative($preset['actions'], $src, $dst)) {
     // Generate an error if image could not generate.
-    watchdog('imagecache', t('Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset)), WATCHDOG_ERROR);
-    header('HTTP/1.0 500 Internal Server Error');
+    watchdog('imagecache', 'Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset['presetname']), WATCHDOG_ERROR);
+    header("HTTP/1.0 500 Internal Server Error");
     exit;
-  } 
+  }
   imagecache_transfer($dst);
 }
 
 function _imagecache_apply_action($action, &$image) {
   $actions = imagecache_action_definitions();
- 
+
   if ($definition = imagecache_action_definition($action['action'])) {
     return call_user_func($action['action'] .'_image', $image, $action['data']);
   }
   // skip undefined actions.. module probably got uninstalled or disabled.
-  watchdog('imagecache', t('non-existant action %action', array('%action' => $action['action'])), WATCHDOG_NOTICE);
+  watchdog('imagecache', 'non-existant action %action', array('%action' => $action['action']), WATCHDOG_NOTICE);
   return true;
 }
 
@@ -438,7 +509,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
 
   // Build the destination folder tree if it doesn't already exists.
   if (!file_check_directory($dir) && !mkdir($dir, 0775, true)) {
-    watchdog('imagecache', t('Failed to create imagecache directory: %dir', array('%dir' => $dir)), WATCHDOG_ERROR);
+    watchdog('imagecache', 'Failed to create imagecache directory: %dir', array('%dir' => $dir), WATCHDOG_ERROR);
     return false;
   }
 
@@ -460,14 +531,14 @@ function imagecache_build_derivative($actions, $src, $dst) {
       }
     }
     if (!_imagecache_apply_action($action, $image)) {
-      watchdog( 'imagecache', t('action(id:%id): %action failed for %src', array('%id' => $action['actionid'], '%action' => $action['action'], '%src' => $src)), WATCHDOG_ERROR);
+      watchdog('imagecache', 'action(id:%id): %action failed for %src', array('%id' => $action['actionid'], '%action' => $action['action'], '%src' => $src), WATCHDOG_ERROR);
       return false;
     }
   }
 
   if (!imageapi_image_close($image, $dst)) {
     if (file_exists($dst)) {
-      watchdog('imagecache', t('Cached image file already exists. There is an issue with your Rewrite configuration.'), WATCHDOG_ERROR);
+      watchdog('imagecache', 'Cached image file already exists. There is an issue with your Rewrite configuration.', WATCHDOG_ERROR);
     }
     return false;
   }
@@ -475,16 +546,16 @@ function imagecache_build_derivative($actions, $src, $dst) {
   return true;
 }
 
-  
+
 
 function imagecache_imagefield_file($op, $file) {
   switch ($op) {
     // Delete imagecache presets when imagecache images are deleted.
     case 'delete': imagecache_image_flush($file['filepath']); break;
 
-    // Create imagecache derivatives when files are saved. 
-    case 'save': 
-      break; 
+    // Create imagecache derivatives when files are saved.
+    case 'save':
+      break;
   }
 
 }
@@ -501,6 +572,7 @@ function imagecache_imagefield_file($op, $file) {
  * integration.
  */
 function imagecache_field_formatter_info() {
+  $formatters = array();
   foreach (imagecache_presets() as $preset) {
     $formatters[$preset['presetname'] .'_default'] = array(
       'label' => $preset['presetname'],
@@ -526,12 +598,17 @@ function imagecache_field_formatter_info() {
   return $formatters;
 }
 
+function theme_imagecache_formatter($element) {
+  return imagecache_field_formatter($element['#field_name'], $element['#item'], $element['#formatter'], node_load($element['#item']['nid']));
+}
+
+
 /**
  * Implementation of hook_field_formatter().
  */
 function imagecache_field_formatter($field, $item, $formatter, $node) {
   if (empty($item['fid']) && $field['use_default_image']) {
-    $item = $field['default_image']; 
+    $item = $field['default_image'];
   }
   // Views does not load the file for us, while CCK display fields does.
   if (empty($item['filepath'])) {
@@ -547,13 +624,13 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
     switch ($style) {
       case 'linked':
-        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
-        return l($imagetag, 'node/'. $node->nid, array('class' => $class), null, null, false, true); 
+        $imagetag = theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        return l($imagetag, 'node/'. $node->nid, array('attributes' => array('class' => $class), 'html' => true));
     
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
         $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
-        return l($imagetag, $original_image_url, array('class' => $class), null, null, false, true);
+        return l($imagetag, $original_image_url, array('attributes' => array('class' => $class), 'html' => true));
 
       case 'url':
         return imagecache_create_url($presetname, $item['filepath']);
@@ -655,8 +732,11 @@ function _imagecache_recursive_delete($dir) {
  *   optional drupal attributes array. If attributes is set, the default imagecache classes 
  *   will not be set automatically, you must do this manually.
  */
-
-function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = null) {
+function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  if ($image = image_get_info(imagecache_create_path($namespace, $path))) {
+    $attributes['width'] = $image['width'];
+    $attributes['height'] = $image['height'];
+  }
   // check is_null so people can intentionally pass an empty array of attributes to override
   // the defaults completely... if 
   if (is_null($attributes)) {
@@ -667,6 +747,11 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
   return '<img src="'. $imagecache_url .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
 
+function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
+  $image = theme('imagecache', $namespace, $path, $alt, $title);
+  $original_image_url = file_create_url($path);
+  return l($image, $original_image_url, array('absolute' => FALSE, 'html' => TRUE));
+}
 
 
 /************************************************************************************
@@ -674,7 +759,7 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
  */
 function imagecache_resize_image(&$image, $data) {
   if (!imageapi_image_resize($image, $data['width'], $data['height'])) {
-    watchdog('imagecache', t('imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, true))), WATCHDOG_ERROR);
+    watchdog('imagecache', 'imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE)), WATCHDOG_ERROR);
     return false;
   }
   return true;
@@ -684,13 +769,13 @@ function imagecache_resize_form($action) {
   $form['width'] = array(
     '#type' => 'textfield',
     '#title' => t('Width'),
-    '#default_value' => $action['width'],
+    '#default_value' => isset($action['width']) ? $action['width'] : '100%',
     '#description' => t('Enter a width in pixels or as a percentage. i.e. 500 or 80%.'),
   );
   $form['height'] = array(
     '#type' => 'textfield',
     '#title' => t('Height'),
-    '#default_value' => $action['height'],
+    '#default_value' => isset($action['height']) ? $action['height'] : '100%',
     '#description' => t('Enter a height in pixels or as a percentage. i.e. 500 or 80%.'),
   );
   return $form;
@@ -717,7 +802,7 @@ function theme_imagecache_resize($element) {
  *
  * @param reset
  *   if set to true it will clear the preset cache
- * 
+ *
  * @return
  *   array of presets array( $preset_id => array('presetid' => integer, 'presetname' => string))
  */
@@ -741,7 +826,7 @@ function imagecache_presets($reset = false) {
 
   // Grab from cache or build the array.
   if ($cache = cache_get('imagecache:presets', 'cache')) {
-    $presets = unserialize($cache->data);
+    $presets = $cache->data;
   }
   else {
     $result = db_query('SELECT * FROM {imagecache_preset} ORDER BY presetname');
@@ -749,7 +834,7 @@ function imagecache_presets($reset = false) {
       $presets[$preset['presetid']] = $preset;
       $presets[$preset['presetid']]['actions'] = imagecache_preset_actions($preset);
     }
-    cache_set('imagecache:presets', 'cache', serialize($presets));
+    cache_set('imagecache:presets', $presets);
   }
   return $presets;
 }
@@ -759,7 +844,7 @@ function imagecache_presets($reset = false) {
  *
  * @param preset_id
  *   The numeric id of a preset.
- * 
+ *
  * @return
  *   preset array( 'presetname' => string, 'presetid' => integet)
  *   empty array if preset_id is an invalid preset
@@ -778,7 +863,7 @@ function imagecache_preset($preset_id, $reset = false) {
  *   preset array( 'presetname' => string, 'presetid' => integer)
  *   empty array if preset_name is an invalid preset
  */
- 
+
 function imagecache_preset_by_name($preset_name) {
   static $presets_by_name = array();
   if (!$presets_by_name &&  $presets = imagecache_presets()) {
@@ -786,7 +871,7 @@ function imagecache_preset_by_name($preset_name) {
       $presets_by_name[$preset['presetname']] = $preset;
     }
   }
-  return (isset($presets_by_name[$preset_name])) ? $presets_by_name[$preset_name] : array(); 
+  return (isset($presets_by_name[$preset_name])) ? $presets_by_name[$preset_name] : array();
 }
 
 /**
@@ -800,16 +885,19 @@ function imagecache_preset_by_name($preset_name) {
 function imagecache_preset_save($preset) {
   // @todo: CRUD level validation?
   if (isset($preset['presetid']) && is_numeric($preset['presetid'])) {
-    db_query('UPDATE {imagecache_preset} SET presetname =\'%s\' WHERE presetid = %d', $preset['presetname'], $preset['presetid']);
+    drupal_write_record('imagecache_preset', $preset, 'presetid');
   }
   else {
-    $preset['presetid'] = db_next_id('{imagecache_preset}_presetid');
-    db_query('INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, \'%s\')', $preset['presetid'], $preset['presetname']);
+    drupal_write_record('imagecache_preset', $preset);
   }
 
   // Reset presets cache.
   imagecache_preset_flush($preset);
   imagecache_presets(true);
+
+  // Rebuild Theme Registry
+  drupal_rebuild_theme_registry();
+
   return $preset;
 }
 
@@ -829,7 +917,7 @@ function imagecache_preset_actions($preset, $reset = false) {
     while ($row = db_fetch_array($result)) {
       $row['data'] = unserialize($row['data']);
       $actions_cache[$preset['presetid']][] = $row;
-    } 
+    }
   }
 
   return isset($actions_cache[$preset['presetid']]) ? $actions_cache[$preset['presetid']] : array();
@@ -875,17 +963,20 @@ function imagecache_action($actionid) {
       $action = array_merge($definition, $action);
       $actions[$actionid] = $action;
     }
-  }  
+  }
   return $actions[$actionid];
 }
 
+function imagecache_action_load($actionid) {
+  return imagecache_action($actionid, TRUE);
+}
+
 function imagecache_action_save($action) {
-  if ($action['actionid']) {
-    db_query('UPDATE {imagecache_action} SET weight=%d, data=\'%s\' WHERE actionid=%d', $action['weight'], serialize($action['data']), $action['actionid']);
+  if (!empty($action['actionid'])) {
+    drupal_write_record('imagecache_action', $action, 'actionid');
   }
   else {
-    $action['actionid'] = db_next_id('{imagecache_action}_actionid');
-    db_query('INSERT INTO {imagecache_action} (actionid, presetid, weight, action, data) VALUES (%d, %d, %d,\'%s\', \'%s\')', $action['actionid'], $action['presetid'], $action['weight'], $action['action'], serialize($action['data']));
+    drupal_write_record('imagecache_action', $action);
   }
   $preset = imagecache_preset($action['presetid']);
   imagecache_preset_flush($preset);

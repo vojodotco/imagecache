@@ -2,4 +2,5 @@
 name = ImageCache
 description = Dynamic image manipulator and cache.
 package = ImageCache
-dependencies = imageapi
+dependencies[] = imageapi
+core = 6.x

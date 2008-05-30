@@ -9,17 +9,23 @@ function imagecache_requirements($phase) {
   // Ensure translations don't break at install time.
   $t = get_t();
 
-  // Check for an image library.
-  if (count(imageapi_get_available_toolkits()) == 0) {
-    $requirements['imagecache_imageapi_toolkits'] = array(
-      'title' => $t('ImageAPI Toolkit'),
-      'value' => $t('No image toolkits available'),
-      'severity' => REQUIREMENT_ERROR,
-      'description' => $t('Imagecache requires an ImageAPI Toolkit such as ImageAPI GD or ImageAPI Imagemagick to function.'),
-    );
-  }
- 
   if ($phase == 'runtime') {
+    // Check this at runtime rather than install time because the order of 
+    // installation doesn't take dependencies into account. ImageAPI may have
+    // been installed by not loaded and if we report a requirement error 
+    // because we can't find its function or no toolkit is enabled modules that
+    // depend on us will still be enabled but will have a missing dependency.
+    // Seems like a better idea to let everything get enabled and then inform
+    // them of the problem.
+    if (count(imageapi_get_available_toolkits()) == 0) {
+      $requirements['imagecache_imageapi_toolkits'] = array(
+        'title' => $t('ImageAPI Toolkit'),
+        'value' => $t('No image toolkits available'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => $t('Imagecache requires an ImageAPI Toolkit such as ImageAPI GD or ImageAPI Imagemagick to function.'),
+      );
+    }
+
     $memory_limit = ini_get('memory_limit');
     
     if (parse_size($memory_limit) < parse_size('96M')) {
@@ -68,74 +74,82 @@ function imagecache_requirements($phase) {
   return $requirements;
 }
 
+function imagecache_schema() {
+    $schema['imagecache_preset'] = array(
+    'fields' => array(
+      'presetid' => array(
+        'description' => t('The primary identifier for an imagecache_preset.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'presetname' => array(
+        'description' => t('The primary identifier for a node.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+    ),
+    'primary key' => array('presetid'),
+  );
+
+  $schema['imagecache_action'] = array(
+    'fields' => array(
+      'actionid' => array(
+        'description' => t('The primary identifier for an imagecache_action.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'presetid' => array(
+        'description' => t('The primary identifier for an imagecache_preset.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'weight' => array(
+        'description' => t('The weight of the action in the preset.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'module' => array(
+        'description' => t('The module that defined the action.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+      'action' => array(
+        'description' => t('The unique ID of the action to be executed.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+      'data' => array(
+        'description' => t('The configuration data for the action.'),
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+        'serialize' => TRUE),
+    ),
+    'primary key' => array('actionid'),
+    'indexes' => array(
+      'presetid' => array('presetid'),
+    ),
+  );
+
+
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
 function imagecache_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret1 = db_query("CREATE TABLE {imagecache_preset} (
-            presetid INT UNSIGNED NOT NULL PRIMARY KEY,
-            presetname VARCHAR(255) NOT NULL DEFAULT '' )
-            /*!40100 DEFAULT CHARACTER SET utf8 */
-      ");
-
-      $ret2 = db_query("CREATE TABLE {imagecache_action} (
-            actionid INT UNSIGNED NOT NULL PRIMARY KEY,
-            presetid INT UNSIGNED NOT NULL DEFAULT 0,
-            weight INT NOT NULL DEFAULT 0,
-            module varchar(255) not null default '',
-            action varchar(255) not null default '',
-            data TEXT NOT NULL)
-            /*!40100 DEFAULT CHARACTER SET utf8 */
-      ");
-      break;
-
-    case 'pgsql':
-      $ret1 = db_query("CREATE TABLE {imagecache_preset} (
-            presetid INTEGER NOT NULL CHECK (presetid > 0),
-            presetname VARCHAR(255) NOT NULL DEFAULT '',
-            PRIMARY KEY (presetid));
-      ");
-      $ret2 = db_query("CREATE TABLE {imagecache_action} (
-            actionid INTEGER NOT NULL CHECK (actionid > 0),
-            presetid INTEGER NOT NULL DEFAULT 0,
-            weight INTEGER NOT NULL DEFAULT 0,
-            module varchar(255) not null default '',
-            action varchar(255) not null default '',
-            data TEXT NOT NULL DEFAULT '',
-            PRIMARY KEY (actionid));
-      ");
-      db_query("CREATE SEQUENCE {imagecache_preset}_presetid_seq INCREMENT 1 START 1;");
-      db_query("CREATE SEQUENCE {imagecache_action}_actionid_seq INCREMENT 1 START 1;");
-      break;
-  }
-
-  if ($ret1 && $ret2) {
-    drupal_set_message(t('Imagecache module installed succesfully.'));
-  } 
-  else {
-    drupal_set_message(t('Imagecache module installation was unsuccessfull. Necessary database tables should be created by hand.', 'error'));
-  }
-  return $ret;
+  drupal_install_schema('imagecache');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function imagecache_uninstall() {
-  db_query('DROP TABLE {imagecache_preset}');
-  db_query('DROP TABLE {imagecache_action}');
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("DELETE FROM {sequences} WHERE name = '{imagecache_action}_actionid'");
-      db_query("DELETE FROM {sequences} WHERE name = '{imagecache_action}_presetid'");
-      break;
-    case 'pgsql':
-      db_query('DROP SEQUENCE {imagecache_action}_actionid_seq');
-      db_query('DROP SEQUENCE {imagecache_preset}_presetid_seq');
-      break;
-  }
+  drupal_uninstall_schema('imagecache');
 }
 
 // Add action id to actions table.

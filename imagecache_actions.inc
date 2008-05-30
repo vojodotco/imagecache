@@ -2,7 +2,7 @@
 // $Id$
 
 /**
- * Imagecache Scale 
+ * Imagecache Scale
  */
 function imagecache_scale_form($data) {
   $form = imagecache_resize_form($data);
@@ -16,7 +16,7 @@ function imagecache_scale_form($data) {
 }
 
 function theme_imagecache_scale($element) {
-  $output = theme_imagecache_resize($element) .  ', upscale: '. 
+  $output = theme_imagecache_resize($element) .  ', upscale: '.
   $output .= ($element['#value']['upscale']) ? t('Yes') : t('No');
   return $output;
 }
@@ -114,9 +114,15 @@ function imagecache_deprecated_scale_image(&$image, $data) {
 
 
 /**
- * Imagecache Crop 
+ * Imagecache Crop
  */
 function imagecache_crop_form($data) {
+  $data += array(
+    'width' => '',
+    'height' => '',
+    'xoffset' => '',
+    'yoffset' => '',
+  );
   $form['width'] = array(
     '#type' => 'textfield',
     '#title' => t('Width'),
@@ -181,7 +187,7 @@ function imagecache_desaturate_image(&$image, $data = array()) {
 
 
 /**
- * Imagecache Rotate 
+ * Imagecache Rotate
  */
 function imagecache_rotate_form($data) {
   $form['degrees'] = array(

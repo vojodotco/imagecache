@@ -1,6 +1,7 @@
 ; $Id$
 name = Imagecache UI
 description = ImageCache User Interface.
-dependencies = imagecache imageapi
+dependencies[] = imagecache
+dependencies[] = imageapi
 package = ImageCache
-
+core = 6.x
