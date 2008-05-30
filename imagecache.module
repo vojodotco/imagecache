@@ -706,15 +706,24 @@ function _imagecache_keyword_filter($value, $current_pixels, $new_pixels) {
  * @param string $path
  *   A filepath relative to file_directory_path.
  */
-function _imagecache_recursive_delete($dir) {
-  $d = dir($dir);
-  while (($entry = $d->read()) !== false) {
-    if ($entry == '.' || $entry == '..') continue;
-    $path = $dir .'/'. $entry;
-    if (is_file($path)) unlink($path);
-    if (is_dir($path)) _imagecache_recursive_delete($path);
+function _imagecache_recursive_delete($path) {
+  if (is_file($path) || is_link($path)) {
+    unlink($path);
+  }  
+  elseif (is_dir($path)) {
+    $d = dir($path);
+    while (($entry = $d->read()) !== false) {
+      if ($entry == '.' || $entry == '..') continue;
+      $entry_path = $path .'/'. $entry;
+      _imagecache_recursive_delete($entry_path);
+    }
+    rmdir($path);
   }
-  rmdir($dir);
+  else {
+    watchdog('imagecache', 'Unknown file type(%path) stat: %stat ', 
+              array('%path' => $path,  '%stat' => print_r(stat($path),1)), WATCHDOG_ERROR);
+  }
+  
 }
 
 /**
