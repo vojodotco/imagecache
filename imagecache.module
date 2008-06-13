@@ -321,7 +321,7 @@ function imagecache_cache_private() {
   else {
     // if there is a 403 image, display it.
     $accesspath = file_create_path('imagecache/'. $preset .'.403.png');
-    if (file_exists($accesspath)) {
+    if (is_file($accesspath)) {
       imagecache_transfer($accesspath);
       exit;
     }
@@ -343,54 +343,19 @@ function _imagecache_cache($presetname, $path) {
   // umm yeah deliver it early if it is there. especially useful
   // to prevent lock files from being created when delivering private files.
   $dst = imagecache_create_path($preset['presetname'], $path);
-  if (file_exists($dst)) {
+  if (is_file($dst)) {
     imagecache_transfer($dst);
   }
 
-
+  // preserve path for watchdog.
   $src = $path;
   
   // check if the path to the file exists
-  if (!is_file($src)) {
-    // check if it is a file in the files dir if we couldn't find it.
-    $src = file_create_path($src);
-  };
-
-  // If the file doesn exist.. It could be an imagefield preview... 
-  if (!is_file($src)) {
-    // scan for imagefield previews 
-    if (!empty($_SESSION['imagefield'])) {
-      foreach ((array) $_SESSION['imagefield'] as $fieldname => $files) {
-        foreach ($files as $delta => $file) {
-          if ($file['preview'] != $src) continue;
-
-          $dst = tempnam(file_directory_temp(), 'imagecache.preview');
-          // by the time shutdown functions are being called
-          // the cwd has changed from document root, to server root
-          // so absolute paths must be used for files in shutdown 
-          // functions.
-          register_shutdown_function('file_delete', realpath($dst));
-          if (!imagecache_build_derivative($preset['actions'], $file['filepath'], $dst)) {
-            // Generate an error if image could not generate.
-            watchdog('imagecache', 'Failed generating a preview image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $presetname), WATCHDOG_ERROR);
-            header("HTTP/1.0 500 Internal Server Error");
-            exit;
-          }
-          imagecache_transfer($dst);
-        }
-      }
-    }
-
-    // if there is a 404 image uploaded for the preset display it.
-    $notfoundpath = file_create_path('imagecache/'. $preset['presetname'] .'.404.png');
-    if (file_exists($notfoundpath)) {
-      imagecache_transfer($notfoundpath);
-      exit;
-    }
-    // otherwise send a 404.
-    header('HTTP/1.0 404 Not Found');
+  if (!is_file($src) && !is_file($src = file_create_path($src))) {
+    // Send a 404 if we don't know of a preset.
+    header("HTTP/1.0 404 Not Found");
     exit;
-  }
+  };
 
   // bail if the requested file isn't an image you can't just summon .php files etc...
   if (!getimagesize($src)) {
@@ -401,27 +366,25 @@ function _imagecache_cache($presetname, $path) {
   $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src);
   if (file_exists($lockfile)) {
     watchdog('imagecache', 'Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile), WATCHDOG_NOTICE);
-    // send a response code that will make the browser wait and reload in a 1/2 sec.
-    // header()
+    // 307 Temporary Redirect, to myself. Lets hope the image is done next time around.
+    header('Location: '. $_SERVER['REQUEST_URI'], TRUE, 307);
     exit;
   }
   touch($lockfile);
-  // register the shtdown function to clean up lock files.
-  // by the time shutdown functions are being called
-  // the cwd has changed from document root, to server root
-  // so absolute paths must be used for files in shutdown 
-  // functions.
+  // register the shtdown function to clean up lock files. by the time shutdown 
+  // functions are being called the cwd has changed from document root, to 
+  // server root so absolute paths must be used for files in shutdown functions.
   register_shutdown_function('file_delete', realpath($lockfile));
 
   // check if deriv exists... (file was created between apaches request handler and reaching this code)
   // otherwise try to create the derivative.
-  if (!file_exists($dst) && !imagecache_build_derivative($preset['actions'], $src, $dst)) {
-    // Generate an error if image could not generate.
-    watchdog('imagecache', 'Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset['presetname']), WATCHDOG_ERROR);
-    header("HTTP/1.0 500 Internal Server Error");
-    exit;
+  if (file_exists($dst) || imagecache_build_derivative($preset['actions'], $src, $dst)) {
+    imagecache_transfer($dst);
   }
-  imagecache_transfer($dst);
+  // Generate an error if image could not generate.
+  watchdog('imagecache', 'Failed generating an image from %image using imagecache preset %preset.', array('%image' => $path, '%preset' => $preset['presetname']), WATCHDOG_ERROR);
+  header("HTTP/1.0 500 Internal Server Error");
+  exit;
 }
 
 function _imagecache_apply_action($action, &$image) {
