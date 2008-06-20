@@ -248,7 +248,7 @@ function imagecache_action_definition($action) {
     $definitions = imagecache_action_definitions();
     $definition = (isset($definitions[$action])) ? $definitions[$action] : array();
     
-    if ($definition && $definition['file']) {
+    if (isset($definition['file'])) {
       require_once($definition['file']);
     }
     $definition_cache[$action] = $definition;
