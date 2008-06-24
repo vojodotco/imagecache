@@ -59,7 +59,7 @@ function imagecache_ui_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['admin/build/imagecache/%imagecache_ui_preset/action-add/%'] = array(
+  $items['admin/build/imagecache/%imagecache_ui_preset/add/%'] = array(
     'title callback' => 'imagecache_preset_title_callback',
     'title arguments' => array('Add !actionname to !presetname', 3, 5),
     'page callback' => 'drupal_get_form',
@@ -77,11 +77,11 @@ function imagecache_ui_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['admin/build/imagecache/%imagecache_ui_preset/action-delete/%imagecache_action'] = array(
+  $items['admin/build/imagecache/%imagecache_ui_preset/%imagecache_action/delete'] = array(
     'title callback' => 'imagecache_preset_title_callback',
-    'title arguments' => array('Delete !action for preset !presetname', 3, 5),
+    'title arguments' => array('Delete !action for preset !presetname', 3, 4),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('imagecache_ui_action_delete_form', 3, 5),
+    'page arguments' => array('imagecache_ui_action_delete_form', 3, 4),
     'access arguments' => array('administer imagecache'),
     'type' => MENU_CALLBACK,
   );
@@ -304,10 +304,10 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
       '#default_value' => $action['weight'],
     );
     $action_form['configure'] = array(
-      '#value' => l(t('Configure'), 'admin/build/imagecache/'. $action['presetid'] .'/action/'. $action['actionid'] ),
+      '#value' => l(t('Configure'), 'admin/build/imagecache/'. $action['presetid'] .'/'. $action['actionid'] ),
     );
     $action_form['remove'] = array(
-      '#value' => l(t('Delete'), 'admin/build/imagecache/'. $action['presetid'] .'/action-delete/'. $action['actionid']),
+      '#value' => l(t('Delete'), 'admin/build/imagecache/'. $action['presetid'] .'/'. $action['actionid'] .'/delete'),
     );
     $form['actions'][$i] = $action_form;
   }
@@ -327,7 +327,7 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
       '#prefix' => '<div>',
       '#suffix' => '</div>',
       '#value' => l(t('Add !action', array('!action' => $definition['name'])),
-                    'admin/build/imagecache/'.  $preset['presetid'] .'/action-add/'. $action) .
+                    'admin/build/imagecache/'.  $preset['presetid'] .'/add/'. $action) .
                     ' - '. $definition['description'],
     );
   }
