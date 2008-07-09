@@ -116,6 +116,10 @@ function imagecache_theme() {
       'file' => 'imagecache_actions.inc',
       'arguments' => array('element' => NULL),
     ),
+    'imagecache_sharpen' => array(
+      'file' => 'imagecache_actions.inc',
+      'arguments' => array('element' => NULL),
+    ),
   );
 
   foreach (imagecache_presets() as $preset) {
@@ -193,6 +197,11 @@ function imagecache_imagecache_actions() {
     'imagecache_rotate' => array(
       'name' => 'Rotate',
       'description' => 'Rotate an image.',
+      'file' => 'imagecache_actions.inc',
+    ),
+    'imagecache_sharpen' => array(
+      'name' => 'Sharpen',
+      'description' => 'Sharpen an image using unsharp masking.',
       'file' => 'imagecache_actions.inc',
     ),
   );
