@@ -317,7 +317,7 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#type' => 'fieldset',
     '#title' => t('New Actions'),
     '#collapsible' => true,
-    '#collapsed' => true,
+    '#collapsed' => count($preset['actions']) > 0,
   );
   
    
