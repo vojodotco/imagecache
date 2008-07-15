@@ -416,7 +416,7 @@ function imagecache_ui_action_form($form_state, $preset, $action) {
   $definitions = imagecache_action_definitions();
 
   if (empty($action)) {
-    drupal_set_message('Unknown Action.'. $actionid, 'error');
+    drupal_set_message('Unknown Action.', 'error');
     drupal_goto('admin/build/imagecache');
   }
 
