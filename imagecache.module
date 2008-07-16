@@ -548,24 +548,24 @@ function imagecache_field_formatter_info() {
   foreach (imagecache_presets() as $preset) {
     $formatters[$preset['presetname'] .'_default'] = array(
       'label' => $preset['presetname'],
-      'field types' => array('image'),
+      'field types' => array('image', 'filefield'),
     );
     $formatters[$preset['presetname'] .'_linked'] = array(
       'label' => t('@preset as link to node', array('@preset' => $preset['presetname'])),
-      'field types' => array('image'),
+      'field types' => array('image', 'filefield'),
     );
     $formatters[$preset['presetname'] .'_imagelink'] = array(
       'label' => t('@preset as link to image', array('@preset' => $preset['presetname'])),
-      'field types' => array('image'),
+      'field types' => array('image', 'filefield'),
     );
     $formatters[$preset['presetname'] .'_path'] = array(
-       'label' => t('path to @preset derivative', array('@preset' => $preset['presetname'])),
-       'field types' => array('image'),
-    );   
+      'label' => t('path to @preset derivative', array('@preset' => $preset['presetname'])),
+      'field types' => array('image', 'filefield'),
+    );
     $formatters[$preset['presetname'] .'_url'] = array(
-       'label' => t('url to @preset derivative', array('@preset' => $preset['presetname'])),
-       'field types' => array('image'),
-    );   
+      'label' => t('url to @preset derivative', array('@preset' => $preset['presetname'])),
+      'field types' => array('image', 'filefield'),
+    );
   }
   return $formatters;
 }
