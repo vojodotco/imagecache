@@ -596,12 +596,12 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
     switch ($style) {
       case 'linked':
-        $imagetag = theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        $imagetag = theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
         return l($imagetag, 'node/'. $node->nid, array('attributes' => array('class' => $class), 'html' => true));
     
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
-        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
         return l($imagetag, $original_image_url, array('attributes' => array('class' => $class), 'html' => true));
 
       case 'url':
@@ -611,7 +611,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
         return imagecache_create_path($presetname, $item['filepath']);
 
       default:
-        return  theme('imagecache', $presetname, $item['filepath'], $item['alt'], $item['title']);
+        return  theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
     }
   }
   return '<!-- imagecache formatter preset('. $presetname .') not found! -->';
