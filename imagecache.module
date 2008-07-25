@@ -571,7 +571,9 @@ function imagecache_field_formatter_info() {
 }
 
 function theme_imagecache_formatter($element) {
-  return imagecache_field_formatter($element['#field_name'], $element['#item'], $element['#formatter'], node_load($element['#item']['nid']));
+  if (isset($element['#item']['nid']) && $node = node_load($element['#item']['nid'])) {
+    return imagecache_field_formatter($element['#field_name'], $element['#item'], $element['#formatter'], $node);
+  }
 }
 
 
@@ -583,7 +585,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item = $field['default_image'];
   }
   // Views does not load the file for us, while CCK display fields does.
-  if (empty($item['filepath']) && module_exists('filefield')) {
+  if (empty($item['filepath'])) {
     $item = array_merge($item, field_file_load($item['fid']));
   }
 
