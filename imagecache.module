@@ -583,8 +583,8 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item = $field['default_image'];
   }
   // Views does not load the file for us, while CCK display fields does.
-  if (empty($item['filepath'])) {
-    $item = array_merge($item,  field_file_load($item['fid']));
+  if (empty($item['filepath']) && module_exists('filefield')) {
+    $item = array_merge($item, field_file_load($item['fid']));
   }
 
   $parts =  explode('_', $formatter);
