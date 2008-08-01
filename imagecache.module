@@ -588,7 +588,8 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   if (empty($item['filepath'])) {
     $item = array_merge($item, field_file_load($item['fid']));
   }
-
+  $alt = empty($item['data']['alt']) ? '' : $item['data']['alt'];
+  $title = empty($item['data']['title']) ? '' : $item['data']['title'];
   $parts =  explode('_', $formatter);
   $style = array_pop($parts);
   $presetname = implode('_', $parts);
@@ -598,12 +599,12 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
     switch ($style) {
       case 'linked':
-        $imagetag = theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
+        $imagetag = theme('imagecache', $presetname, $item['filepath'], $alt, $title);
         return l($imagetag, 'node/'. $node->nid, array('attributes' => array('class' => $class), 'html' => true));
     
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
-        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
+        $imagetag =  theme('imagecache', $presetname, $item['filepath'], $alt, $title);
         return l($imagetag, $original_image_url, array('attributes' => array('class' => $class), 'html' => true));
 
       case 'url':
@@ -955,6 +956,9 @@ function imagecache_action_load($actionid) {
 }
 
 function imagecache_action_save($action) {
+  $definition = imagecache_action_definition($action['action']);
+  $action = array_merge($definition, $action);
+
   if (!empty($action['actionid'])) {
     drupal_write_record('imagecache_action', $action, 'actionid');
   }
