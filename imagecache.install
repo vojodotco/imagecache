@@ -7,7 +7,7 @@
   $t = get_t();
 
   if ($phase == 'runtime') {
-  
+
     $imagecache_directory = file_create_path() .'/imagecache';
     if (!file_check_directory($imagecache_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
       if (!is_dir($imagecache_directory)) {
@@ -142,7 +142,7 @@ function imagecache_update_2() {
       $ret[] = update_sql('ALTER TABLE {imagecache_preset} CHANGE rulesetname presetname VARCHAR(255) NOT NULL DEFAULT \'\'');
       $ret[] = update_sql('ALTER TABLE {imagecache_action} CHANGE rulesetid presetid  INTEGER NOT NULL DEFAULT 0');
       break;
-    
+
     case 'pgsql':
       $ret[] = update_sql('ALTER TABLE {imagecache_preset} RENAME COLUMN rulesetid TO presetid');
       $ret[] = update_sql('ALTER TABLE {imagecache_preset} RENAME COLUMN rulesetname TO presetname');
@@ -153,15 +153,15 @@ function imagecache_update_2() {
 }
 
 
-/** 
+/**
  * Remove auto-increment from tables, instead depending on the sequences table and db_next_id()
- */  
+ */
 function imagecache_update_3() {
   $ret = array();
-  
+
   $count_action = db_result(db_query('SELECT max(actionid) FROM {imagecache_action}')) + 1;
   $count_preset = db_result(db_query('SELECT max(presetid) FROM {imagecache_preset}')) + 1;
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -211,7 +211,7 @@ function imagecache_update_4() {
     if ($function == 'scale and crop') {
       $function = 'scale_and_crop';
     }
-    // Keep scale and crop and the old scale function seperate... I don't really want to break BC with 
+    // Keep scale and crop and the old scale function seperate... I don't really want to break BC with
     // the 2.x update. We'll deprecate this version.
     if ($function == 'scale') {
       $function = 'deprecated_scale';

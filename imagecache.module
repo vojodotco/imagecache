@@ -6,28 +6,28 @@
  * Dynamic image resizer and image cacher.
  *
  * Imagecache allows you to setup presets for image processing.
- * If an ImageCache derivative doesn't exist the web server's 
+ * If an ImageCache derivative doesn't exist the web server's
  * rewrite rules will pass the request to Drupal which in turn
  * hands it off to imagecache to dynamically generate the file.
- * 
- * To view a derivative image you request a special url containing 
+ *
+ * To view a derivative image you request a special url containing
  * 'imagecache/<presetname>/path/to/file.ext.
  *
  * Presets can be managed at http://example.com/admin/build/imagecache.
  *
- * To view a derivative image you request a special url containing 
+ * To view a derivative image you request a special url containing
  * 'imagecache/<presetname>/path/to/file.ext.
  *
  * If you had a preset names 'thumbnail' and you wanted to see the
- * thumbnail version of  http://example.com/files/path/to/myimage.jpg you 
+ * thumbnail version of  http://example.com/files/path/to/myimage.jpg you
  * would use http://example.com/files/imagecache/thumbnail/path/to/myimage.jpg
  *
- * ImageCache provides formatters for CCK Imagefields and is leveraged by several 
+ * ImageCache provides formatters for CCK Imagefields and is leveraged by several
  * other modules. ImageCache also relies heavily on ImageAPI for it's image processing.
  * If there are errors with actual image processing look to ImageAPI first.
- * 
+ *
  * @todo: add watermarking capabilities.
- * 
+ *
  */
 
 
@@ -155,7 +155,7 @@ function imagecache_theme() {
  * @return array
  *   An array of information on the actions implemented by a module. The array
  *   contains a sub-array for each action node type, with the machine-readable
- *   action name as the key. Each sub-array has up to 3 attributes. Possible 
+ *   action name as the key. Each sub-array has up to 3 attributes. Possible
  *   attributes:
  *
  *     "name": the human-readable name of the action. Required.
@@ -256,14 +256,14 @@ function imagecache_action_definition($action) {
   if (!isset($definition_cache[$action])) {
     $definitions = imagecache_action_definitions();
     $definition = (isset($definitions[$action])) ? $definitions[$action] : array();
-    
+
     if (isset($definition['file'])) {
       require_once($definition['file']);
     }
     $definition_cache[$action] = $definition;
   }
   return $definition_cache[$action];
-} 
+}
 
 /**
  * Return a URL that points to the location of a derivative of the
@@ -358,7 +358,7 @@ function _imagecache_cache($presetname, $path) {
 
   // preserve path for watchdog.
   $src = $path;
-  
+
   // check if the path to the file exists
   if (!is_file($src) && !is_file($src = file_create_path($src))) {
     // Send a 404 if we don't know of a preset.
@@ -380,8 +380,8 @@ function _imagecache_cache($presetname, $path) {
     exit;
   }
   touch($lockfile);
-  // register the shtdown function to clean up lock files. by the time shutdown 
-  // functions are being called the cwd has changed from document root, to 
+  // register the shtdown function to clean up lock files. by the time shutdown
+  // functions are being called the cwd has changed from document root, to
   // server root so absolute paths must be used for files in shutdown functions.
   register_shutdown_function('file_delete', realpath($lockfile));
 
@@ -468,7 +468,7 @@ function _imagecache_cache_set_cache_headers($fileinfo, &$headers) {
 
 /**
  * build an image cache derivative
- * 
+ *
  * @param $actions  Array of imagecache actions.
  * @param $src      Path of the source file.
  * @param $dst      Path of the destination file.
@@ -480,13 +480,13 @@ function imagecache_build_derivative($actions, $src, $dst) {
   $dir = dirname($dst);
 
   // Build the destination folder tree if it doesn't already exists.
-  if (!file_check_directory($dir) && !mkdir($dir, 0775, true)) {
+  if (!file_check_directory($dir, FILE_CREATE_DIRECTORY) && !mkdir($dir, 0775, true)) {
     watchdog('imagecache', 'Failed to create imagecache directory: %dir', array('%dir' => $dir), WATCHDOG_ERROR);
     return false;
   }
 
   if (!$image = imageapi_image_open($src)) {
-    return false; 
+    return false;
   }
 
   foreach ($actions as $action) {
@@ -593,7 +593,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   $parts =  explode('_', $formatter);
   $style = array_pop($parts);
   $presetname = implode('_', $parts);
- 
+
   $class = "imagecache imagecache-$presetname imagecache-$style imagecache-$formatter";
   if ($preset = imagecache_preset_by_name($presetname)) {
     $item['filepath'] = $item['fid'] == 'upload' ? $item['preview'] : $item['filepath'];
@@ -601,7 +601,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
       case 'linked':
         $imagetag = theme('imagecache', $presetname, $item['filepath'], $alt, $title);
         return l($imagetag, 'node/'. $node->nid, array('attributes' => array('class' => $class), 'html' => true));
-    
+
       case 'imagelink':
         $original_image_url = file_create_url($item['filepath']);
         $imagetag =  theme('imagecache', $presetname, $item['filepath'], $alt, $title);
@@ -684,7 +684,7 @@ function _imagecache_keyword_filter($value, $current_pixels, $new_pixels) {
 function _imagecache_recursive_delete($path) {
   if (is_file($path) || is_link($path)) {
     unlink($path);
-  }  
+  }
   elseif (is_dir($path)) {
     $d = dir($path);
     while (($entry = $d->read()) !== false) {
@@ -695,10 +695,10 @@ function _imagecache_recursive_delete($path) {
     rmdir($path);
   }
   else {
-    watchdog('imagecache', 'Unknown file type(%path) stat: %stat ', 
+    watchdog('imagecache', 'Unknown file type(%path) stat: %stat ',
               array('%path' => $path,  '%stat' => print_r(stat($path),1)), WATCHDOG_ERROR);
   }
-  
+
 }
 
 /**
@@ -713,7 +713,7 @@ function _imagecache_recursive_delete($path) {
  * @param $title
  *   img tag title text
  * @param attributes
- *   optional drupal attributes array. If attributes is set, the default imagecache classes 
+ *   optional drupal attributes array. If attributes is set, the default imagecache classes
  *   will not be set automatically, you must do this manually.
  */
 function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
@@ -722,10 +722,10 @@ function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes
     $attributes['height'] = $image['height'];
   }
   // check is_null so people can intentionally pass an empty array of attributes to override
-  // the defaults completely... if 
+  // the defaults completely... if
   if (is_null($attributes)) {
     $attributes['class'] = 'imagecache imagecache-'. $namespace;
-  } 
+  }
   $attributes = drupal_attributes($attributes);
   $imagecache_url = imagecache_create_url($namespace, $path);
   return '<img src="'. $imagecache_url .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
@@ -775,8 +775,8 @@ function theme_imagecache_resize($element) {
 /**
  *  ImageCache 2.x API
  *
- *  The API for imagecache has changed.  The 2.x API returns more structured 
- *  data, has shorter function names, and implements more aggressive metadata 
+ *  The API for imagecache has changed.  The 2.x API returns more structured
+ *  data, has shorter function names, and implements more aggressive metadata
  *  caching.
  *
  */
@@ -968,7 +968,7 @@ function imagecache_action_save($action) {
   $preset = imagecache_preset($action['presetid']);
   imagecache_preset_flush($preset);
   imagecache_presets(true);
-  return $action; 
+  return $action;
 }
 
 function imagecache_action_delete($action) {

@@ -134,7 +134,7 @@ function imagecache_ui_presets() {
   $header = array(t('Preset Name'), t('Actions'));
   $rows = array();
   foreach (imagecache_presets() as $preset) {
-    $row = array(); 
+    $row = array();
     $row[] = l($preset['presetname'], 'admin/build/imagecache/'. $preset['presetid']);
     $links = array();
     $links[] = l(t('Edit'), 'admin/build/imagecache/'. $preset['presetid']);
@@ -319,8 +319,8 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#collapsible' => true,
     '#collapsed' => count($preset['actions']) > 0,
   );
-  
-   
+
+
   foreach (imagecache_action_definitions() as $action => $definition) {
     $form['actions']['new'][] = array(
       '#type' => 'markup',
