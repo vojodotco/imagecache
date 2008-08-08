@@ -5,7 +5,7 @@
  * @file
  * Dynamic image resizer and image cacher.
  *
- * Imagecache allows you to setup presets for image processing.
+ * ImageCache allows you to setup presets for image processing.
  * If an ImageCache derivative doesn't exist the web server's
  * rewrite rules will pass the request to Drupal which in turn
  * hands it off to imagecache to dynamically generate the file.
@@ -176,7 +176,7 @@ function imagecache_imagecache_actions() {
     ),
     'imagecache_deprecated_scale' => array(
       'name' => 'Deprecated Scale',
-      'description' => 'Precursor to Scale and Crop. Has inside and outside dimension support. This action will be removed in Imagecache 2.1).',
+      'description' => 'Precursor to Scale and Crop. Has inside and outside dimension support. This action will be removed in ImageCache 2.1).',
       'file' => 'imagecache_actions.inc',
     ),
     'imagecache_scale_and_crop' => array(
@@ -374,7 +374,7 @@ function _imagecache_cache($presetname, $path) {
 
   $lockfile = file_directory_temp() .'/'. $preset['presetname'] . basename($src);
   if (file_exists($lockfile)) {
-    watchdog('imagecache', 'Imagecache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile), WATCHDOG_NOTICE);
+    watchdog('imagecache', 'ImageCache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile), WATCHDOG_NOTICE);
     // 307 Temporary Redirect, to myself. Lets hope the image is done next time around.
     header('Location: '. $_SERVER['REQUEST_URI'], TRUE, 307);
     exit;

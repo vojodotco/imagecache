@@ -1,5 +1,5 @@
 ; $Id$
-name = Imagecache UI
+name = ImageCache UI
 description = ImageCache User Interface.
 dependencies[] = imagecache
 dependencies[] = imageapi

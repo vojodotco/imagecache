@@ -1,19 +1,19 @@
-Imagecache is a dynamic image manipulation and cache tool. It allows you to
+ImageCache is a dynamic image manipulation and cache tool. It allows you to
 create a namespace that corresponds to a set of image manipulation actions. It
 generates a derivative image the first time it is requested from a namespace
 until the namespace or the entire imagecache is flushed.
 
 Getting Started:
 
-1. Upload and enable both the Imagecache and Imagecache UI modules.
+1. Upload and enable both the ImageCache and ImageCache UI modules.
 
-2. Go to Administer -> Site Building -> Imagecache. Click on the local task tab
+2. Go to Administer -> Site Building -> ImageCache. Click on the local task tab
 labeled "Add New Preset" to build a new set of image manipulation actions.
 
 3. Enter a descriptive name of your choice (e.g. 'product_thumbnail') into the
 "Preset Namespace" box and click "Create New Preset".
 
-4. Add actions to your preset that tell Imagecache how to manipulate the
+4. Add actions to your preset that tell ImageCache how to manipulate the
 original image when it is rendered for display. Available actions include
 crop, scale, desaturate (grey scale), resize, and rotate. Multiple actions
 may be added to a preset.
@@ -34,7 +34,7 @@ named 'green-widget.jpg', you could view your modified image at:
 
 http://example.com/files/imagecache/product_thumbnail/files/green-widget...
 
-Imagecache also defines a theme function that you can use in your modules and
+ImageCache also defines a theme function that you can use in your modules and
 themes to automatically display a manipulated image. For example, to use the
 theme function in a .tpl.php file, add the following line where you would like
 the image to appear:
@@ -51,9 +51,9 @@ $alt, $title and $attributes are optional parameters that specify ALT/TITLE
 text for the image element in the HTML or other attributes as specified in the
 $attributes array.
 
-Using Imagecache with Contributed Modules:
+Using ImageCache with Contributed Modules:
 
-Imagecache presets can be put to use in various other modules. For example, when
+ImageCache presets can be put to use in various other modules. For example, when
 using CCK with the Imagefield module, you can use the "Display fields" local
 task tab to choose a preset to apply to images in that field. Similarly, you
 can specify a preset when displaying images attached to nodes using Imagefield
@@ -62,4 +62,4 @@ in a View through the Views UI.
 For more information, refer to http://drupal.org/node/163561.
 
 (Images, page names, and form field names may refer to previous versions of
-Imagecache, but the concepts are the same.)
+ImageCache, but the concepts are the same.)

@@ -2,7 +2,7 @@
 // $Id$
 
 /**
- * Imagecache Scale
+ * ImageCache Scale
  */
 function imagecache_scale_form($data) {
   $form = imagecache_resize_form($data);
@@ -34,7 +34,7 @@ function imagecache_scale_image(&$image, $data) {
 
 
 /**
- * Imagecache Scale and Crop
+ * ImageCache Scale and Crop
  */
 function imagecache_scale_and_crop_form($data) {
   return imagecache_resize_form($data);
@@ -56,7 +56,7 @@ function imagecache_scale_and_crop_image(&$image, $data) {
 
 
 /**
- * Imagecache Deprecated Scale.
+ * ImageCache Deprecated Scale.
  * This will be removed in imagecache 2.1
  */
 function imagecache_deprecated_scale_form($data) {
@@ -114,7 +114,7 @@ function imagecache_deprecated_scale_image(&$image, $data) {
 
 
 /**
- * Imagecache Crop
+ * ImageCache Crop
  */
 function imagecache_crop_form($data) {
   $data += array(
@@ -165,7 +165,7 @@ function imagecache_crop_image(&$image, $data) {
 
 
 /**
- * Imagecache Desaturate
+ * ImageCache Desaturate
  */
 function imagecache_desaturate_form($data) {
   return array();
@@ -187,7 +187,7 @@ function imagecache_desaturate_image(&$image, $data = array()) {
 
 
 /**
- * Imagecache Rotate
+ * ImageCache Rotate
  */
 function imagecache_rotate_form($data) {
   $form['degrees'] = array(
@@ -240,7 +240,7 @@ function imagecache_rotate_image(&$image, $data) {
 }
 
 /**
- * Imagecache Sharpen
+ * ImageCache Sharpen
  */
 function imagecache_sharpen_form($data) {
   $form['info'] = array(
