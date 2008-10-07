@@ -588,6 +588,9 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
   if (empty($item['filepath'])) {
     $item = array_merge($item, field_file_load($item['fid']));
   }
+  if (is_string($item['data'])) {
+    $item['data'] = unserialize($item['data']);
+  }
   $alt = empty($item['data']['alt']) ? '' : $item['data']['alt'];
   $title = empty($item['data']['title']) ? '' : $item['data']['title'];
   $parts =  explode('_', $formatter);
