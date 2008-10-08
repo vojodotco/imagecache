@@ -376,7 +376,7 @@ function _imagecache_cache($presetname, $path) {
   if (file_exists($lockfile)) {
     watchdog('imagecache', 'ImageCache already generating: %dst, Lock file: %tmp.', array('%dst' => $dst, '%tmp' => $lockfile), WATCHDOG_NOTICE);
     // 307 Temporary Redirect, to myself. Lets hope the image is done next time around.
-    header('Location: '. $_SERVER['REQUEST_URI'], TRUE, 307);
+    header('Location: '. request_uri(), TRUE, 307);
     exit;
   }
   touch($lockfile);
