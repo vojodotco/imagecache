@@ -518,8 +518,19 @@ function imagecache_build_derivative($actions, $src, $dst) {
   return true;
 }
 
-
-
+/**
+ * Implementation of hook_user().
+ */
+function imagecache_user($op, &$edit, &$account, $category = NULL) {
+  // Flush cached old user picture.
+  if ($op == 'update' && !empty($account->picture)) {
+    imagecache_image_flush($account->picture);
+  }
+}
+ 
+/**
+ * Implementation of hook_imagefield_file().
+ */
 function imagecache_imagefield_file($op, $file) {
   switch ($op) {
     // Delete imagecache presets when imagecache images are deleted.
