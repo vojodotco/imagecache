@@ -193,7 +193,7 @@ function imagecache_update_4() {
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {imagecache_action} ADD COLUMN action varchar(255) not null default '' after weight");
     case 'pgsql':
-      // @todo: pgsql updates.
+      $ret[] = update_sql("ALTER TABLE {imagecache_action} ADD COLUMN action varchar(255) NOT NULL DEFAULT ''");
       break;
   }
 
