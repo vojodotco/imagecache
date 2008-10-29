@@ -706,6 +706,7 @@ function _imagecache_recursive_delete($path) {
       $entry_path = $path .'/'. $entry;
       _imagecache_recursive_delete($entry_path);
     }
+    $d->close();
     rmdir($path);
   }
   else {
