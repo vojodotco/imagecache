@@ -510,7 +510,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
 
   if (!imageapi_image_close($image, $dst)) {
     if (file_exists($dst)) {
-      watchdog('imagecache', 'Cached image file already exists. There is an issue with your Rewrite configuration.', WATCHDOG_ERROR);
+      watchdog('imagecache', 'Cached image file %dst already exists. There may be an issue with your rewrite configuration.', array('%dst' => $dst), WATCHDOG_ERROR);
     }
     return false;
   }
