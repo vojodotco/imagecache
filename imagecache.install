@@ -228,4 +228,12 @@ function imagecache_update_4() {
   return $ret;
 }
 
+function imagecache_update_5() {
+  // enable image API.
+  module_rebuild_cache(); // make sure new modules are in the system table.
+  module_enable(array('imageapi', 'imageapi_gd', 'imageapi_imagemagick')); // enable our new module.
+
+  // @todo: update formatter names: http://cvs.drupal.org/viewvc.py/drupal/contributions/modules/imagecache/imagecache.module?r1=1.68&r2=1.68.2.8&pathrev=DRUPAL-5--2
+  // ln: 516 diff 511.  
+}
 
