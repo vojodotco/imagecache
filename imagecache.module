@@ -414,14 +414,8 @@ function _imagecache_apply_action($action, &$image) {
  */
 
 function imagecache_transfer($path) {
-  if (function_exists('mime_content_type')) {
-    $mime = mime_content_type($path);
-  }
-  else {
-    $size = getimagesize($path);
-    $mime = $size['mime'];
-  }
-  $headers = array('Content-Type: '. mime_header_encode($mime));
+  $size = getimagesize($path);
+  $headers = array('Content-Type: '. mime_header_encode($size['mime']));
 
   if ($fileinfo = stat($path)) {
     $headers[] = 'Content-Length: '. $fileinfo[7];
