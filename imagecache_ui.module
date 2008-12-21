@@ -155,7 +155,7 @@ function imagecache_ui_preset_add_form($form_state) {
     '#size' => '64',
     '#title' => t('Preset Namespace'),
     '#default_value' => '',
-    '#description' => t('The namespace is used in URL\'s for images to tell imagecache how to process an image. Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'),
+    '#description' => t('The namespace is used in URLs for images to tell imagecache how to process an image. Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'),
     '#validate' => array('imagecache_element_presetname_validate' => array()),
   );
   $form['submit'] = array(
