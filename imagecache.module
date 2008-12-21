@@ -817,8 +817,9 @@ function imagecache_presets($reset = false) {
     return $presets;
   }
 
-  // Grab from cache or build the array.
-  if ($cache = cache_get('imagecache:presets', 'cache')) {
+  // Grab from cache or build the array. To ensure that the Drupal 5 upgrade
+  // path works, we also check whether the presets list is an array.
+  if (($cache = cache_get('imagecache:presets', 'cache')) && is_array($cache->data)) {
     $presets = $cache->data;
   }
   else {
