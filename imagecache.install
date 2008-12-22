@@ -120,6 +120,12 @@ function imagecache_install() {
  * Implementation of hook_uninstall().
  */
 function imagecache_uninstall() {
+  // Remove any cached images.
+  $path = file_directory_path() .'/imagecache/';
+  if (is_dir($path)) {
+    _imagecache_recursive_delete($path);
+  }
+
   drupal_uninstall_schema('imagecache');
 }
 
