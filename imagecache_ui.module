@@ -369,6 +369,25 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#type' => 'submit',
     '#value' => t('Update Preset'),
   );
+
+  // Display a preview image for this action. Put it below the submit button so
+  // users don't have to do a bunch of scrolling.
+  $preview_path = file_create_path('imagecache_sample.png');
+  if (!file_exists($preview_path)) {
+    // Copy of the image into the files directory so rather than generating it
+    // from the original so we don't end up creating subdirectories mirroring
+    // the path to the this module.
+    $preview_path = drupal_get_path('module', 'imagecache_ui') .'/sample.png';
+    file_copy($preview_path, 'imagecache_sample.png');
+  }
+  imagecache_image_flush($preview_path);
+  $imagecache_path = imagecache_create_url($preset['presetname'], $preview_path) .'?'. time();
+  $form['preview'] = array(
+    '#type' => 'item',
+    '#title' => t('Preview'),
+    '#value' => l($imagecache_path, $imagecache_path) .'<br />'. l("<img src='$imagecache_path' />", $imagecache_path, array('html' => true)),
+  );
+
   return $form;
 }
 
