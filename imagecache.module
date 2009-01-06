@@ -492,6 +492,11 @@ function imagecache_build_derivative($actions, $src, $dst) {
     return false;
   }
 
+  // Simply copy the file if there are no actions.
+  if (empty($actions)) {
+    return file_copy($src, $dst, FILE_EXISTS_REPLACE);
+  }
+
   if (!$image = imageapi_image_open($src)) {
     return false;
   }
