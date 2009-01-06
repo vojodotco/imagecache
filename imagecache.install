@@ -287,21 +287,23 @@ function imagecache_update_6000() {
 
   // Update primary keys to serial type for Drupal 6
   foreach ($schema as $table => $info) {
-    db_drop_primary_key($ret, $table);
     $field = $info['primary key'][0];
-    if (db_table_exists($table)) {
+    if (db_table_exists('sequences')) {
       $ret[] = update_sql("DELETE FROM {sequences} WHERE name = '{{$table}}_{$field}'");
     }
-    db_change_field($ret, $table, $field, $field, $info['fields'][$field], array('primary key' => array($field)));
+    db_change_field($ret, $table, $field, $field, $info['fields'][$field]);
   }
 
-  // Add 'module' column to action table.
+  // Going to assume that if the table doesn't have a module column that
+  // it needs the index as well.
   if (!db_column_exists('imagecache_action', 'module')) {
+    // Add 'module' column to action table.
     db_add_field($ret, 'imagecache_action', 'module', $schema['imagecache_action']['fields']['module']);
+
+    // Add 'presetid' index to action table
+    db_add_index($ret, 'imagecache_action', 'presetid', array('presetid'));
   }
 
-  // Add 'presetid' index to action table
-  db_add_index($ret, 'imagecache_action', 'presetid', array('presetid'));
 
   return $ret;
 }
