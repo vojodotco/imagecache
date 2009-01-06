@@ -396,11 +396,24 @@ function _imagecache_cache($presetname, $path) {
   exit;
 }
 
-function _imagecache_apply_action($action, &$image) {
+/**
+ * Apply an action to an image.
+ *
+ * @param $action
+ *   Action array
+ * @param $image
+ *   Image object
+ * @return
+ *   Boolean, true indicating success and false failure.
+ */
+function _imagecache_apply_action($action, $image) {
   $actions = imagecache_action_definitions();
 
   if ($definition = imagecache_action_definition($action['action'])) {
-    return call_user_func($action['action'] .'_image', $image, $action['data']);
+    $function = $action['action'] .'_image';
+    if (function_exists($function)) {
+      return $function($image, $action['data']);
+    }
   }
   // skip undefined actions.. module probably got uninstalled or disabled.
   watchdog('imagecache', 'non-existant action %action', array('%action' => $action['action']), WATCHDOG_NOTICE);
@@ -521,7 +534,7 @@ function imagecache_user($op, &$edit, &$account, $category = NULL) {
     imagecache_image_flush($account->picture);
   }
 }
- 
+
 /**
  * Implementation of hook_imagefield_file().
  */
