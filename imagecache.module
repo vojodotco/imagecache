@@ -640,7 +640,7 @@ function imagecache_field_formatter($field, $item, $formatter, $node) {
         return imagecache_create_path($presetname, $item['filepath']);
 
       default:
-        return  theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title']);
+        return theme('imagecache', $presetname, $item['filepath'], $item['data']['alt'], $item['data']['title'], array('class' => $class));
     }
   }
   return '<!-- imagecache formatter preset('. $presetname .') not found! -->';
