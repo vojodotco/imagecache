@@ -181,7 +181,7 @@ function imagecache_element_presetname_validate($element) {
 
   // Check for illegal characters in preset names
   if (preg_match('/[^0-9a-zA-Z_\-]/', $element['#value'])) {
-    form_set_error($element['#name'], t('Please only use alphanumic characters, underscores (_), and hyphens (-) for preset names.'));
+    form_set_error($element['#name'], t('Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'));
   }
 }
 
@@ -253,7 +253,7 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#size' => '64',
     '#title' => t('Preset Namespace'),
     '#default_value' => $preset['presetname'],
-    '#description' => t('The namespace is used in URL\'s for images to tell imagecache how to process an image. Please only use alphanumic characters, underscores (_), and hyphens (-) for preset names.'),
+    '#description' => t('The namespace is used in URL\'s for images to tell imagecache how to process an image. Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'),
     '#validate' => array('imagecache_element_presetname_validate' => array()),
   );
   $form['presetid'] = array(
