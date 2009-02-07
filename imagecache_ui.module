@@ -252,12 +252,8 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
 
   $form = array();
   $form['presetname'] = array(
-    '#type' => 'textfield',
-    '#size' => '64',
-    '#title' => t('Preset Namespace'),
-    '#default_value' => $preset['presetname'],
-    '#description' => t('The namespace is used in URL\'s for images to tell imagecache how to process an image. Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'),
-    '#required' => TRUE,
+    '#type' => 'value',
+    '#value' => $preset['presetname'],
   );
   $form['presetid'] = array(
     '#type' => 'value',
@@ -390,8 +386,6 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#title' => t('Preview'),
     '#value' => l($imagecache_path, $imagecache_path) .'<br />'. l("<img src='$imagecache_path' />", $imagecache_path, array('html' => true)),
   );
-
-  $form['#validate'][] = 'imagecache_ui_preset_add_form_validate';
 
   return $form;
 }
