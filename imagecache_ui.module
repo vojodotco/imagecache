@@ -217,8 +217,8 @@ function  imagecache_ui_preset_add_form_submit($form, &$form_state) {
 function imagecache_ui_preset_add_form_validate($form, &$form_state) {
   $values = $form_state['values'];
   // Check for duplicates
-  foreach(imagecache_presets() as $preset) {
-    if (in_array($values['presetname'], $preset)) {
+  foreach (imagecache_presets() as $preset) {
+    if ($values['presetname'] == $preset['presetname']) {
       form_set_error('presetname', t('The namespace you have chosen is already in use.'));
       break;
     }
