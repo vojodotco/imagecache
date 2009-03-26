@@ -1,22 +1,23 @@
 ﻿# $Id$
 #
-# German translation of Drupal (general)
-# Copyright YEAR NAME <EMAIL@ADDRESS>
+# LANGUAGE translation of Drupal (general)
+# Copyright 2009 Thomas Zahreddin u. Stefan Borchert <EMAIL@ADDRESS>
 # Generated from files:
-#  imagecache_actions.inc,v 1.19 2009/02/06 11:41:27 drewish
-#  imagecache.module,v 1.98 2009/02/17 21:36:18 drewish
-#  imagecache_ui.module,v 1.28 2009/02/17 21:57:31 drewish
+#  imagecache_actions.inc,v 1.20 2009/03/18 08:17:34 drewish
+#  imagecache.module,v 1.99 2009/03/18 08:17:34 drewish
+#  imagecache_ui.module,v 1.29 2009/03/18 08:17:34 drewish
 #  imagecache.info,v 1.5 2008/05/30 15:46:59 dopry
 #  imagecache_ui.info,v 1.5 2008/08/08 17:05:12 drewish
 #  imagecache.install,v 1.25 2009/01/06 19:48:59 drewish
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2009-02-26 21:05+0100\n"
-"PO-Revision-Date: 2009-02-26 21:11+0100\n"
-"Last-Translator: Frank Tartler <frank.tartler@googlemail.com>\n"
-"Language-Team: German <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2009-03-26 19:07+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: drupalcenter.de - Drupal Voice Channel\n <EMAIL@ADDRESS>\n"
+"Language-Team: drupalcenter.de - Drupal Voice Channel\n <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -24,11 +25,12 @@ msgstr ""
 
 #: imagecache_actions.inc:12
 msgid "Allow Upscaling"
-msgstr "Hochskalieren erlauben"
+msgstr "Vergrößern erlauben"
+
 
 #: imagecache_actions.inc:13
 msgid "Let scale make images larger than their original size"
-msgstr "Beim Skalieren Bilder über die Originalgröße hinaus skalieren"
+msgstr "Bilder über die Originalgröße hinaus vergrößern"
 
 #: imagecache_actions.inc:20;216
 msgid "Yes"
@@ -40,11 +42,11 @@ msgstr "Nein"
 
 #: imagecache_actions.inc:64
 msgid "<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width."
-msgstr "<strong>Innerhalb Abmessungen</strong>: Endgültige Abmessungen sind kleiner als oder gleich wie die eingegebene Breite und Höhe. Nützlich zu Sicherstellung einer maximalen Höhe und/oder Breite."
+msgstr "<strong>Innerhalb originaler Abmessungen</strong>: Endgültige Abmessungen sind kleiner als oder gleich der eingegebene Breite und Höhe. Nützlich zu Sicherstellung einer maximalen Höhe und/oder Breite."
 
 #: imagecache_actions.inc:65
 msgid "<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square."
-msgstr "<strong>Außerhalb Abmessungen</strong>: Endgültige Abmessungen sind größer als oder gleich wie die eingegebene Breite und Höhe. Ideal zum Zuschneiden des Ergebnisses auf ein Rechteck."
+msgstr "<strong>Außerhalb originaler Abmessungen</strong>: Endgültige Abmessungen sind größer oder gleich der eingegebene Breite und Höhe. Ideal zum Zuschneiden des Ergebnisses auf ein Quadrat."
 
 #: imagecache_actions.inc:70
 msgid "Scale to fit"
@@ -52,35 +54,33 @@ msgstr "Passend skalieren"
 
 #: imagecache_actions.inc:71;93
 msgid "Inside dimensions"
-msgstr "Innerhalb Abmessungen"
+msgstr "Kleiner als originaler Abmessungen"
 
 #: imagecache_actions.inc:71;93
 msgid "Outside dimensions"
-msgstr "Außerhalb Abmessungen"
+msgstr "Größer originaler Abmessungen"
 
-#: imagecache_actions.inc:78;128
-#: imagecache.module:803
+#: imagecache_actions.inc:78;128 imagecache.module:803
 msgid "Width"
 msgstr "Breite"
 
-#: imagecache_actions.inc:80;130
-#: imagecache.module:805
+#: imagecache_actions.inc:80;130 imagecache.module:805
 msgid "Enter a width in pixels or as a percentage. i.e. 500 or 80%."
 msgstr "Breite in Pixeln oder Prozent angeben, z.B. 500 oder 80%."
 
-#: imagecache_actions.inc:84;134
-#: imagecache.module:809
+
+#: imagecache_actions.inc:84;134 imagecache.module:809
 msgid "Height"
 msgstr "Höhe"
 
-#: imagecache_actions.inc:86;136
-#: imagecache.module:811
+
+#: imagecache_actions.inc:86;136 imagecache.module:811
 msgid "Enter a height in pixels or as a percentage. i.e. 500 or 80%."
 msgstr "Höhe in Pixeln oder Prozent angeben, z.B. 500 oder 80%"
 
 #: imagecache_actions.inc:140
 msgid "X offset"
-msgstr "X-Offset"
+msgstr "horizontaler Versatz"
 
 #: imagecache_actions.inc:142
 msgid "Enter an offset in pixels or use a keyword: <em>left</em>, <em>center</em>, or <em>right</em>."
@@ -88,11 +88,11 @@ msgstr "Offset in Pixeln angeben oder Schlüsselword verwenden: <em>left</em>, <
 
 #: imagecache_actions.inc:146
 msgid "Y offset"
-msgstr "Y-Offset"
+msgstr "vertikaler Versatz"
 
 #: imagecache_actions.inc:148
 msgid "Enter an offset in pixels or use a keyword: <em>top</em>, <em>center</em>, or <em>bottom</em>."
-msgstr "Offset in Pixeln angeben oder Schlüüselwort verwenden: <em>top</em>, <em>center</em>, or <em>bottom</em>."
+msgstr "Versatz in Pixeln angeben oder Schlüüselwort verwenden: <em>top</em> (dt. oben), <em>center</em> (dt. mittig), or <em>bottom</em> (dt. unten)."
 
 #: imagecache_actions.inc:196
 msgid "Rotation angle"
@@ -100,7 +100,7 @@ msgstr "Rotationswinkel"
 
 #: imagecache_actions.inc:197
 msgid "The number of degrees the image should be rotated. Positive numbers are clockwise, negative are counter-clockwise."
-msgstr "Die Anzahl Grad, die das Bild gedreht werden soll. Positive Zahlen sind im Uhrzeigersein, negative entgegen dem Uhrzeigersinn."
+msgstr "Winkel in Grad, um den das Bild gedreht wird. Positive Zahlen sind im Uhrzeigersein, negative entgegen dem Uhrzeigersinn."
 
 #: imagecache_actions.inc:202
 msgid "Randomize"
@@ -140,23 +140,24 @@ msgstr "Radius"
 
 #: imagecache_actions.inc:253
 msgid "The radius of the gaussian, in pixels, not counting the center pixel. If you're using Imagemagick, you can set this to 0 to let Imagemagick select a suitable radius. Typically 0.5 to 1 for screen resolutions. (default 0.5)"
-msgstr ""
+msgstr "Der Radius des Gauss-Filters in Pixeln (ohne das Mittelpunktspixe). Bei Einsatzu von Imagemagick kann der Wert auf 0 belassen werden, um Imagemagick einen passenden Radius bestimmen zu lassen. Üblicherweise wird ein Wert zwischen 0,5 und 1 für Bildschirmauflösungen verwendet; Standardwert ist 0,5."
 
 #: imagecache_actions.inc:258
 msgid "Sigma"
-msgstr ""
+msgstr "Sigma"
 
 #: imagecache_actions.inc:259
 msgid "The standard deviation of the gaussian, in pixels. General rule of thumb: if radius < 1 then sigma = radius, else sigma = sqrt(radius). (default 0.5)"
-msgstr ""
+msgstr "Die Standardabweichung für den Gaussfiler in Pixel. In etwa: für Radien kleiner 1 ist Sigma gleich dem Radius, sonst ist Sigma die Quadratwurzel aus dem Radius; Standardwert ist 0,5"
 
 #: imagecache_actions.inc:264
 msgid "Amount"
-msgstr ""
+msgstr "Wert"
 
+#, fuzzy
 #: imagecache_actions.inc:265
 msgid "The percentage of the difference between the original and the blur image that is added back into the original. Typically 50 to 200. (default 100)."
-msgstr ""
+msgstr "Prozentwert für einen Weichzeichner, typisch zwischen 50 und 200; Standard ist 100."
 
 #: imagecache_actions.inc:270
 msgid "Threshold"
@@ -172,7 +173,7 @@ msgstr "Radius:"
 
 #: imagecache_actions.inc:278
 msgid "sigma:"
-msgstr ""
+msgstr "Sigma"
 
 #: imagecache_actions.inc:279
 msgid "amount:"
@@ -182,10 +183,10 @@ msgstr "Betrag:"
 msgid "threshold:"
 msgstr "Grenzwert:"
 
-#: imagecache_actions.inc:29;50;108;160;181;236;292
-#: imagecache.module:398;415;440;512;539;546;746;794;0
+
+#: imagecache_actions.inc:29;50;108;160;181;236;292 imagecache.module:398;415;440;512;539;546;746;794;0
 msgid "imagecache"
-msgstr ""
+msgstr "Imagecache"
 
 #: imagecache_actions.inc:29
 msgid "imagecache_scale_image failed. image: %image, data: %data."
@@ -197,7 +198,7 @@ msgstr "imagecache_scale_and_crop fehlgeschlagen. Bild: %image, Daten: %data."
 
 #: imagecache_actions.inc:108
 msgid "imagecache_deprecated_scale failed. image: %image, data: %data."
-msgstr "imagecache_deprecated_scale fehlgeschlagen. Bild: %image, Daten: %data."
+msgstr ""
 
 #: imagecache_actions.inc:160
 msgid "imagecache_crop failed. image: %image, data: %data."
@@ -217,31 +218,31 @@ msgstr "imagecache_sharpen_image fehlgeschlagen. Bild: %image, Daten: %data."
 
 #: imagecache.module:594
 msgid "@preset image"
-msgstr ""
+msgstr "@preset Bild"
 
 #: imagecache.module:598
 msgid "@preset image linked to node"
-msgstr ""
+msgstr "@preset Bild verlinkt auf den Beitrag"
 
 #: imagecache.module:602
 msgid "@preset image linked to image"
-msgstr ""
+msgstr "@preset Bild verlinkt auf das Original"
 
 #: imagecache.module:606
 msgid "@preset file path"
-msgstr ""
+msgstr "@preset Dateipfad"
 
 #: imagecache.module:610
 msgid "@preset URL"
-msgstr ""
+msgstr "@preset URL"
 
 #: imagecache.module:398
 msgid "ImageCache already generating: %dst, Lock file: %tmp."
-msgstr ""
+msgstr "ImageCache erzeugt gerade: %dst, Lock file: %tmp."
 
 #: imagecache.module:415
 msgid "Failed generating an image from %image using imagecache preset %preset."
-msgstr ""
+msgstr "Ein Bild konnte aus %image mit dem Parameter %preset nicht erzeugt werden."
 
 #: imagecache.module:440
 msgid "non-existant action %action"
@@ -253,19 +254,19 @@ msgstr "ImageCache-Verzeichnis konnte nicht erstellt werden: %dir"
 
 #: imagecache.module:539
 msgid "action(id:%id): %action failed for %src"
-msgstr ""
+msgstr "Aktion(id:%id): %action ist fehlgeschlagen für %src"
 
 #: imagecache.module:546
 msgid "Cached image file %dst already exists. There may be an issue with your rewrite configuration."
-msgstr ""
+msgstr "Datei %dst ist im Cache vorhanden. Überprüfen Sie die Konfiguraion auf die Möglichkeit zu Überschreiben."
 
 #: imagecache.module:746
 msgid "Unknown file type(%path) stat: %stat "
-msgstr ""
+msgstr "Unbekannter Dateityp %path; Ausgabe der php-Funktion stat(): %stat"
 
 #: imagecache.module:794
 msgid "imagecache_resize_image failed. image: %image, data: %data."
-msgstr ""
+msgstr "imagecache_resize_image failed. Bild: %image, Daten: %data."
 
 #: imagecache.module:57
 msgid "administer imagecache"
@@ -273,11 +274,11 @@ msgstr "Imagecache verwalten"
 
 #: imagecache.module:57
 msgid "flush imagecache"
-msgstr ""
+msgstr "Imagecache leeren"
 
 #: imagecache.module:59
 msgid "view imagecache "
-msgstr ""
+msgstr "Imagecache ansehen"
 
 #: imagecache.module:59
 msgid "presetname"
@@ -285,11 +286,11 @@ msgstr ""
 
 #: imagecache_ui.module:15
 msgid "Manage ImageCache presets."
-msgstr "ImageCache-Voreinstellungen verwalten."
+msgstr "Verwalten der Voreinstellungen von ImageCache"
 
 #: imagecache_ui.module:17
 msgid "Place the following snippet in your module as part of <code>hook_imagecache_default_presets()</code>."
-msgstr ""
+msgstr "Den folgenden Code in ein eigenes Modul übernehmen, um ImageCache Voreinstellungen zu nutzen: <code>hook_imagecache_default_presets()</code>"
 
 #: imagecache_ui.module:158
 msgid "Preset Name"
@@ -385,7 +386,7 @@ msgstr "Voreinstellung %name (ID: @id) wurde gelöscht."
 
 #: imagecache_ui.module:269
 msgid "Are you sure you want to flush the preset %preset?"
-msgstr "Soll die Voreinstellung %preset wirklich geleert werden?"
+msgstr "Soll die Voreinstellung %preset geleert werden?"
 
 #: imagecache_ui.module:281
 msgid "Preset %name (ID: @id) was flushed."
@@ -467,9 +468,7 @@ msgstr "Die Aktion wurde gelöscht."
 msgid "Add Action"
 msgstr "Aktion hinzufügen"
 
-#: imagecache_ui.module:27
-#: imagecache.info:0;0
-#: imagecache_ui.info:0
+#: imagecache_ui.module:27 imagecache.info:0;0 imagecache_ui.info:0
 msgid "ImageCache"
 msgstr ""
 
@@ -491,19 +490,19 @@ msgstr ""
 
 #: imagecache.install:52;73;261
 msgid "The primary identifier for an imagecache_preset."
-msgstr ""
+msgstr "Primärschlüssel für die Tabelle imagecache_preset."
 
 #: imagecache.install:57
 msgid "The primary identifier for a node."
-msgstr ""
+msgstr "Name der Voreinstellung"
 
 #: imagecache.install:68;272
 msgid "The primary identifier for an imagecache_action."
-msgstr ""
+msgstr "Primärschlüssel für die Tabelle imagecache_action."
 
 #: imagecache.install:79
 msgid "The weight of the action in the preset."
-msgstr ""
+msgstr "Gewichtung der Aktion für die Voreinstellung."
 
 #: imagecache.install:85;278
 msgid "The module that defined the action."
@@ -511,47 +510,47 @@ msgstr "Das Modul, das die Aktion definiert hat."
 
 #: imagecache.install:90
 msgid "The unique ID of the action to be executed."
-msgstr "Die eindeutige ID der Aktion, die ausgeführt werden soll."
+msgstr "Die eindeutige ID der Aktion, die ausgeführt wird."
 
 #: imagecache.install:95
 msgid "The configuration data for the action."
 msgstr "Die Konfigurationsdaten für die Aktion."
 
-#: (duplicate) imagecache.install:15
-#: ;22 ;29
+
+#: (duplicate) imagecache.install:15 ;22 ;29 
 msgid "ImageCache Directory"
 msgstr "ImageCache-Verzeichnis"
 
-#: (duplicate) imagecache.install:16
+#: (duplicate) imagecache.install:16 
 msgid "%p does not a directory or is not readable by the webserver."
 msgstr "%p ist kein Verzeichnis oder vom Webserver nicht lesbar."
 
-#: (duplicate) imagecache.install:23
-#: ;40
+
+#: (duplicate) imagecache.install:23 ;40 
 msgid "%p is not writeable by the webserver."
 msgstr "%p ist nicht durch den Webserver schreibbar"
 
-#: (duplicate) imagecache.install:30
+#: (duplicate) imagecache.install:30 
 msgid "An unknown error occured."
-msgstr "Ein unbekannter Fehler ist aufgetreten."
+msgstr ""
 
-#: (duplicate) imagecache.install:31
+#: (duplicate) imagecache.install:31 
 msgid "An unknown error occured trying to verify %p is a directory and is writable."
 msgstr "Ein unbekannter Fehler ist aufgetreten bei der Überprüfung, ob %p ein Verzeichnis und schreibbar ist."
 
-#: (duplicate) imagecache.install:39
+#: (duplicate) imagecache.install:39 
 msgid "ImageCache Temp Directory"
 msgstr "Temporäres ImageCache-Verzeichnis"
 
 #: imagecache.info:0
 msgid "Dynamic image manipulator and cache."
-msgstr "Dynamischer Bild-Manipulator und -Cache."
+msgstr "Bild verändern und cachen."
 
 #: imagecache_ui.info:0
 msgid "ImageCache UI"
-msgstr ""
+msgstr "ImageCache UI"
 
 #: imagecache_ui.info:0
 msgid "ImageCache User Interface."
-msgstr "ImageCache-Benutzeroberfläche."
+msgstr "ImageCache Benutzer Interface"
 
