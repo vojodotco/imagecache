@@ -334,7 +334,7 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     file_copy($preview_path, 'imagecache_sample.png');
   }
   imagecache_image_flush($preview_path);
-  $imagecache_path = imagecache_create_url($preset['presetname'], $preview_path) .'?'. time();
+  $imagecache_path = imagecache_create_url($preset['presetname'], $preview_path, TRUE);
   $form['preview'] = array(
     '#type' => 'item',
     '#title' => t('Preview'),
