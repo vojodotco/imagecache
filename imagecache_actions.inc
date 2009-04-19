@@ -1,6 +1,11 @@
 <?php
 // $Id$
 
+function theme_imagecache_resize($element) {
+  $data = $element['#value'];
+  return 'width: '. $data['width'] .', height: '. $data['height'];
+}
+
 /**
  * ImageCache Scale
  */

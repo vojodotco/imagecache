@@ -111,6 +111,7 @@ function imagecache_theme() {
         'attributes' => array(),
     )),
     'imagecache_resize' => array(
+      'file' => 'imagecache_actions.inc',
       'arguments' => array('element' => NULL),
     ),
     'imagecache_scale' => array(
@@ -826,13 +827,6 @@ function imagecache_resize_form($action) {
   );
   return $form;
 }
-
-function theme_imagecache_resize($element) {
-  $data = $element['#value'];
-  return 'width: '. $data['width'] .', height: '. $data['height'];
-}
-
-
 
 /**
  *  ImageCache 2.x API
