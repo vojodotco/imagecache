@@ -395,15 +395,17 @@ function _imagecache_cache($presetname, $path) {
   // preserve path for watchdog.
   $src = $path;
 
-  // check if the path to the file exists
+  // Check if the path to the file exists.
   if (!is_file($src) && !is_file($src = file_create_path($src))) {
-    // Send a 404 if we don't know of a preset.
+    watchdog('imagecache', '404: Unable to find %image ', array('%image' => $src), WATCHDOG_ERROR);
     header("HTTP/1.0 404 Not Found");
     exit;
   };
 
-  // bail if the requested file isn't an image you can't just summon .php files etc...
+  // Bail if the requested file isn't an image you can't request .php files
+  // etc...
   if (!getimagesize($src)) {
+    watchdog('imagecache', '403: File is not an image %image ', array('%image' => $src), WATCHDOG_ERROR);
     header('HTTP/1.0 403 Forbidden');
     exit;
   }
