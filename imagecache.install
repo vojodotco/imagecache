@@ -13,7 +13,7 @@
       if (!is_dir($imagecache_directory)) {
         $requirements['imagecache_directory'] = array(
           'title' => $t('ImageCache Directory'),
-          'value' => $t('%p does not a directory or is not readable by the webserver.', array('%p' => $imagecache_directory)),
+          'value' => $t('%p is not a directory or is not readable by the webserver.', array('%p' => $imagecache_directory)),
           'severity' => REQUIREMENT_ERROR,
         );
       }
