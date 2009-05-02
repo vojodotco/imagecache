@@ -653,7 +653,11 @@ function theme_imagecache_formatter_default($element) {
     return '';
   }
 
-  list($presetname, $style) = explode('_', $element['#formatter'], 2);
+  // Extract the preset name from the formatter name.
+  $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
+  $style = 'linked';
+  $style = 'default';
+
   $item = $element['#item'];
   $item['data']['alt'] = isset($item['data']['alt']) ? $item['data']['alt'] : '';
   $item['data']['title'] = isset($item['data']['title']) ? $item['data']['title'] : NULL;
@@ -668,7 +672,10 @@ function theme_imagecache_formatter_linked($element) {
     return '';
   }
 
-  list($presetname, $style) = explode('_', $element['#formatter'], 2);
+  // Extract the preset name from the formatter name.
+  $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
+  $style = 'linked';
+
   $item = $element['#item'];
   $item['data']['alt'] = isset($item['data']['alt']) ? $item['data']['alt'] : '';
   $item['data']['title'] = isset($item['data']['title']) ? $item['data']['title'] : NULL;
@@ -685,7 +692,10 @@ function theme_imagecache_formatter_imagelink($element) {
     return '';
   }
 
-  list($presetname, $style) = explode('_', $element['#formatter'], 2);
+  // Extract the preset name from the formatter name.
+  $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
+  $style = 'imagelink';
+
   $item = $element['#item'];
   $item['data']['alt'] = isset($item['data']['alt']) ? $item['data']['alt'] : '';
   $item['data']['title'] = isset($item['data']['title']) ? $item['data']['title'] : NULL;
@@ -702,10 +712,10 @@ function theme_imagecache_formatter_path($element) {
     return '';
   }
 
-  list($presetname, $style) = explode('_', $element['#formatter'], 2);
-  $item = $element['#item'];
+  // Extract the preset name from the formatter name.
+  $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
 
-  return imagecache_create_path($presetname, $item['filepath']);
+  return imagecache_create_path($presetname, $element['#item']['filepath']);
 }
 
 function theme_imagecache_formatter_url($element) {
@@ -714,10 +724,10 @@ function theme_imagecache_formatter_url($element) {
     return '';
   }
 
-  list($presetname, $style) = explode('_', $element['#formatter'], 2);
-  $item = $element['#item'];
+  // Extract the preset name from the formatter name.
+  $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
 
-  return imagecache_create_url($presetname, $item['filepath']);
+  return imagecache_create_url($presetname, $element['#item']['filepath']);
 }
 
 /**
