@@ -815,35 +815,57 @@ function _imagecache_recursive_delete($path) {
 /**
  * Create and image tag for an imagecache derivative
  *
- * @param $namespace
- *   presetname of the derivative you wish to generate a tag for.
+ * @param $presetname
+ *   String with the name of the preset used to generate the derivative image.
  * @param $path
- *   path to the original image you wish to create a derivative image tag for.
+ *   String path to the original image you wish to create a derivative image
+ *   tag for.
  * @param $alt
- *   img tag alternate text
+ *   Optional string with alternate text for the img element.
  * @param $title
- *   img tag title text
+ *   Optional string with title for the img element.
  * @param attributes
- *   optional drupal attributes array. If attributes is set, the default imagecache classes
- *   will not be set automatically, you must do this manually.
+ *   Optional drupal_attributes() array. If $attributes is an array then the
+ *   default imagecache classes will not be set automatically, you must do this
+ *   manually.
+ * @return
+ *   HTML img element string.
  */
-function theme_imagecache($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
-  if ($image = image_get_info(imagecache_create_path($namespace, $path))) {
+function theme_imagecache($presetname, $path, $alt = '', $title = '', $attributes = NULL) {
+  if ($image = image_get_info(imagecache_create_path($presetname, $path))) {
     $attributes['width'] = $image['width'];
     $attributes['height'] = $image['height'];
   }
-  // check is_null so people can intentionally pass an empty array of attributes to override
-  // the defaults completely... if
+  // Check is_null so people can intentionally pass an empty array of
+  // to override the defaults completely.
   if (is_null($attributes)) {
-    $attributes['class'] = 'imagecache imagecache-'. $namespace;
+    $attributes['class'] = 'imagecache imagecache-'. $presetname;
   }
+
   $attributes = drupal_attributes($attributes);
-  $imagecache_url = imagecache_create_url($namespace, $path);
+  $imagecache_url = imagecache_create_url($presetname, $path);
   return '<img src="'. $imagecache_url .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. $attributes .' />';
 }
 
-function theme_imagecache_imagelink($namespace, $path, $alt = '', $title = '', $attributes = NULL) {
-  $image = theme('imagecache', $namespace, $path, $alt, $title);
+/**
+ * Create a link the original image that wraps the derivative image.
+ *
+ * @param $presetname
+ *   String with the name of the preset used to generate the derivative image.
+ * @param $path
+ *   String path to the original image you wish to create a derivative image
+ *   tag for.
+ * @param $alt
+ *   Optional string with alternate text for the img element.
+ * @param $title
+ *   Optional string with title for the img element.
+ * @param attributes
+ *   Optional drupal_attributes() array for the link.
+ * @return
+ *   An HTML string.
+ */
+function theme_imagecache_imagelink($presetname, $path, $alt = '', $title = '', $attributes = NULL) {
+  $image = theme('imagecache', $presetname, $path, $alt, $title);
   $original_image_url = file_create_url($path);
   return l($image, $original_image_url, array('absolute' => FALSE, 'html' => TRUE));
 }
