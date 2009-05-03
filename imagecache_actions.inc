@@ -33,7 +33,7 @@ function theme_imagecache_resize($element) {
 /**
  * ImageCache Scale
  */
-function imagecache_scale_form($data) {
+function imagecache_scale_form($data = array()) {
   $form = imagecache_resize_form($data);
   $form['upscale'] = array(
     '#type' => 'checkbox',
@@ -65,7 +65,7 @@ function imagecache_scale_image(&$image, $data) {
 /**
  * ImageCache Scale and Crop
  */
-function imagecache_scale_and_crop_form($data) {
+function imagecache_scale_and_crop_form($data = array()) {
   return imagecache_resize_form($data);
 }
 
@@ -88,7 +88,7 @@ function imagecache_scale_and_crop_image(&$image, $data) {
  * ImageCache Deprecated Scale.
  * This will be removed in imagecache 2.1
  */
-function imagecache_deprecated_scale_form($data) {
+function imagecache_deprecated_scale_form($data = array()) {
   $helptext = array();
   $helptext['inside'] = t('<strong>Inside dimensions</strong>: Final dimensions will be less than or equal to the entered width and height. Useful for ensuring a maximum height and/or width.');
   $helptext['outside'] = t('<strong>Outside dimensions</strong>: Final dimensions will be greater than or equal to the entered width and height. Ideal for cropping the result to a square.');
@@ -145,7 +145,7 @@ function imagecache_deprecated_scale_image(&$image, $data) {
 /**
  * ImageCache Crop
  */
-function imagecache_crop_form($data) {
+function imagecache_crop_form($data = array()) {
   $data += array(
     'width' => '',
     'height' => '',
@@ -196,7 +196,7 @@ function imagecache_crop_image(&$image, $data) {
 /**
  * ImageCache Desaturate
  */
-function imagecache_desaturate_form($data) {
+function imagecache_desaturate_form($data = array()) {
   return array();
 }
 
@@ -218,7 +218,7 @@ function imagecache_desaturate_image(&$image, $data = array()) {
 /**
  * ImageCache Rotate
  */
-function imagecache_rotate_form($data) {
+function imagecache_rotate_form($data = array()) {
   $form['degrees'] = array(
     '#type' => 'textfield',
     '#default_value' => (isset($data['degrees'])) ? $data['degrees'] : 0,

@@ -351,51 +351,76 @@ function theme_imagecache_ui_preset_actions($form) {
 }
 
 
-function imagecache_ui_action_form($form_state, $preset, $action) {
-  $definitions = imagecache_action_definitions();
-
-  if (empty($action)) {
-    drupal_set_message(t('Unknown Action.'), 'error');
-    drupal_goto('admin/build/imagecache');
+/**
+ * Page with form for adding a new action to add to a preset.
+ */
+function imagecache_ui_action_add_page($preset, $actionname) {
+  // Make sure the name is valid.
+  if (!$definition = imagecache_action_definition($actionname)) {
+    drupal_set_message(t('Unknown action.'), 'error');
+    drupal_goto('admin/build/imagecache/'. $preset['presetid']);
   }
-
-  if (empty($preset)) {
-    drupal_set_message(t('Unknown Preset.'), 'error');
-    drupal_goto('admin/build/imagecache');
-  }
-
-  $form = array(
-    '#tree' => TRUE,
+  $action = array(
+    'presetid' => $preset['presetid'],
+    'action' => $actionname,
+    'data' => array(),
   );
+  return drupal_get_form('imagecache_ui_action_form', $preset, $action);
+}
 
+
+function imagecache_ui_action_form($form_state, $preset, $action) {
+  // Do some error checking.
+  if (empty($preset['presetid'])) {
+    drupal_set_message(t('Unknown preset.'), 'error');
+    drupal_goto('admin/build/imagecache');
+  }
+  if (empty($action['action']) || !$definition = imagecache_action_definition($action['action'])) {
+    drupal_set_message(t('Unknown action.'), 'error');
+    drupal_goto('admin/build/imagecache/'. $preset['presetid']);
+  }
+  if ($action['presetid'] != $preset['presetid']) {
+    drupal_set_message(t('This %action action is not associated %preset preset.', array('%action' => $action['action'], '%preset' => $preset['presetname'])), 'error');
+    drupal_goto('admin/build/imagecache/'. $preset['presetid']);
+  }
+
+  $form['#tree'] = TRUE;
+  $form['presetid'] = array(
+    '#type' => 'value',
+    '#value' => $action['presetid'],
+  );
   $form['actionid'] = array(
     '#type' => 'value',
     '#value' => $action['actionid'],
   );
+  $form['action'] = array(
+    '#type' => 'value',
+    '#value' => $action['action'],
+  );
 
-
-  if (!empty($definitions[$action['action']]['file'])) {
-    require_once($definitions[$action['action']]['file']);
+  if (!empty($definition['file'])) {
+    require_once($definition['file']);
   }
-  $form['data'] = call_user_func($action['action'] .'_form', $action['data']);
+  if (function_exists($action['action'] .'_form')) {
+    $form['data'] = call_user_func($action['action'] .'_form', $action['data']);
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Update Action'),
+    '#value' => empty($action['actionid']) ? t('Create Action') : t('Update Action'),
   );
   return $form;
 }
 
 function imagecache_ui_action_form_submit($form, &$form_state) {
-  if ($action = imagecache_action($form_state['values']['actionid'])) {
-    $action = array_merge($action, $form_state['values']);
-    imagecache_action_save($action);
-    drupal_set_message(t('The action was succesfully updated.'));
-    $form_state['redirect'] = 'admin/build/imagecache/'. $action['presetid'];
+  imagecache_action_save($form_state['values']);
+  if (empty($form_state['values']['presetid'])) {
+    drupal_set_message(t('The action was succesfully created.'));
   }
   else {
-    drupal_set_message(t('Unknown Action: @action_id', array('@action_id' => $form_state['values']['actionid'])));
-    $form_state['redirect'] = 'admin/build/imagecache';
+    drupal_set_message(t('The action was succesfully updated.'));
   }
+  $form_state['redirect'] = 'admin/build/imagecache/'. $form_state['values']['presetid'];
 }
 
 
@@ -427,15 +452,4 @@ function imagecache_ui_action_delete_form_submit($form, &$form_state) {
   imagecache_action_delete($action);
   drupal_set_message(t('The action has been deleted.'));
   $form_state['redirect'] = 'admin/build/imagecache/'. $action['presetid'];
-}
-
-/**
- * Create a new action object to add to a preset.
- */
-function imagecache_ui_action_add_page($preset, $actionname) {
-  $action = array(
-    'presetid' => $preset['presetid'],
-    'action' => $actionname,
-  );
-  return drupal_get_form('imagecache_ui_action_form', $preset, $action);
 }
