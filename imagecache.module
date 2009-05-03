@@ -824,22 +824,25 @@ function _imagecache_recursive_delete($path) {
  *   Optional string with alternate text for the img element.
  * @param $title
  *   Optional string with title for the img element.
- * @param attributes
+ * @param $attributes
  *   Optional drupal_attributes() array. If $attributes is an array then the
  *   default imagecache classes will not be set automatically, you must do this
  *   manually.
+ * @param $getsize
+ *   If set to TRUE, the image's dimension are fetched and added as width/height
+ *   attributes.
  * @return
  *   HTML img element string.
  */
-function theme_imagecache($presetname, $path, $alt = '', $title = '', $attributes = NULL) {
-  if ($image = image_get_info(imagecache_create_path($presetname, $path))) {
-    $attributes['width'] = $image['width'];
-    $attributes['height'] = $image['height'];
-  }
-  // Check is_null so people can intentionally pass an empty array of
+function theme_imagecache($presetname, $path, $alt = '', $title = '', $attributes = NULL, $getsize = TRUE) {
+  // Check is_null() so people can intentionally pass an empty array of
   // to override the defaults completely.
   if (is_null($attributes)) {
-    $attributes['class'] = 'imagecache imagecache-'. $presetname;
+    $attributes = array('class' => 'imagecache imagecache-'. $presetname);
+  }
+  if ($getsize && ($image = image_get_info(imagecache_create_path($presetname, $path)))) {
+    $attributes['width'] = $image['width'];
+    $attributes['height'] = $image['height'];
   }
 
   $attributes = drupal_attributes($attributes);
