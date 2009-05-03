@@ -1,6 +1,30 @@
 <?php
 // $Id$
 
+function imagecache_resize_form($action) {
+  $form['width'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Width'),
+    '#default_value' => isset($action['width']) ? $action['width'] : '100%',
+    '#description' => t('Enter a width in pixels or as a percentage. i.e. 500 or 80%.'),
+  );
+  $form['height'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Height'),
+    '#default_value' => isset($action['height']) ? $action['height'] : '100%',
+    '#description' => t('Enter a height in pixels or as a percentage. i.e. 500 or 80%.'),
+  );
+  return $form;
+}
+
+function imagecache_resize_image(&$image, $data) {
+  if (!imageapi_image_resize($image, $data['width'], $data['height'])) {
+    watchdog('imagecache', 'imagecache_resize_image failed. image: %image, data: %data.', array('%path' => $image, '%data' => print_r($data, TRUE)), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  return TRUE;
+}
+
 function theme_imagecache_resize($element) {
   $data = $element['#value'];
   return 'width: '. $data['width'] .', height: '. $data['height'];
