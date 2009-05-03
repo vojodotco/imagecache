@@ -429,35 +429,13 @@ function imagecache_ui_action_delete_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/build/imagecache/'. $action['presetid'];
 }
 
-
-function imagecache_ui_action_add_form($form_state, $preset, $actionname) {
-  $definition = imagecache_action_definition($actionname);
-
-  $form = array(
-    '#tree' => TRUE,
+/**
+ * Create a new action object to add to a preset.
+ */
+function imagecache_ui_action_add_page($preset, $actionname) {
+  $action = array(
+    'presetid' => $preset['presetid'],
+    'action' => $actionname,
   );
-  $form['action'] = array(
-    '#type' => 'value',
-    '#value' => $actionname,
-  );
-  $form['presetid'] = array(
-    '#type' => 'value',
-    '#value' => $preset['presetid'],
-  );
-  $form['weight'] = array(
-    '#type' => 'weight',
-    '#title' => t('Weight'),
-  );
-
-  $form['data'] = call_user_func($actionname .'_form', array());
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Add Action'),
-  );
-  return $form;
-}
-
-function imagecache_ui_action_add_form_submit($form, &$form_state) {
-  imagecache_action_save($form_state['values']);
-  $form_state['redirect'] = 'admin/build/imagecache/'. $form_state['values']['presetid'];
+  return drupal_get_form('imagecache_ui_action_form', $preset, $action);
 }
