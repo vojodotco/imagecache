@@ -605,18 +605,12 @@ function imagecache_user($op, &$edit, &$account, $category = NULL) {
 }
 
 /**
- * Implementation of hook_imagefield_file().
+ * Implementation of filefield.module's hook_file_delete().
+ *
+ * Remove derivative images after the originals are deleted by filefield.
  */
-function imagecache_imagefield_file($op, $file) {
-  switch ($op) {
-    // Delete imagecache presets when imagecache images are deleted.
-    case 'delete': imagecache_image_flush($file['filepath']); break;
-
-    // Create imagecache derivatives when files are saved.
-    case 'save':
-      break;
-  }
-
+function imagecache_file_delete($file) {
+  imagecache_image_flush($file->filepath);
 }
 
 /**
