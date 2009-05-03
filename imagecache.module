@@ -528,13 +528,17 @@ function _imagecache_cache_set_cache_headers($fileinfo, &$headers) {
 }
 
 /**
- * build an image cache derivative
+ * Create a new image based on an image preset.
  *
- * @param $actions  Array of imagecache actions.
- * @param $src      Path of the source file.
- * @param $dst      Path of the destination file.
- * @param $tmp      Path of the temporary file used for manipulating the image.
- * @return TRUE - derivative generated, FALSE - no derivative generated, NULL - derivative being generated
+ * @param $preset
+ *   An image preset array.
+ * @param $source
+ *   Path of the source file.
+ * @param $destination
+ *   Path of the destination file.
+ * @return
+ *   TRUE if an image derivative is generated, FALSE if no image
+ *  derivative is generated. NULL if the derivative is being generated.
  */
 function imagecache_build_derivative($actions, $src, $dst) {
   // get the folder for the final location of this preset...
@@ -555,17 +559,25 @@ function imagecache_build_derivative($actions, $src, $dst) {
     return FALSE;
   }
 
+  if (file_exists($dst)) {
+    watchdog('imagecache', 'Cached image file %dst already exists but is being regenerated. There may be an issue with your rewrite configuration.', array('%dst' => $dst), WATCHDOG_WARNING);
+  }
+
   foreach ($actions as $action) {
     if (!empty($action['data'])) {
-      // QuickSketch, why do these run first/twice? - dopry.
+      // Make sure the width and height are computed first so they can be used
+      // in relative x/yoffsets like 'center' or 'bottom'.
       if (isset($action['data']['width'])) {
-        $width = _imagecache_filter('width', $action['data']['width'], $image->info['width'], $image->info['height']);
+        $action['data']['width']   = _imagecache_percent_filter($action['data']['width'], $image->info['width']);
       }
       if (isset($action['data']['height'])) {
-        $height = _imagecache_filter('height', $action['data']['height'], $image->info['width'], $image->info['height']);
+        $action['data']['height']  = _imagecache_percent_filter($action['data']['height'], $image->info['height']);
       }
-      foreach ($action['data'] as $key => $value) {
-        $action['data'][$key] = _imagecache_filter($key, $value, $image->info['width'], $image->info['height'], $width, $height);
+      if (isset($action['data']['xoffset'])) {
+        $action['data']['xoffset'] = _imagecache_keyword_filter($action['data']['xoffset'], $image->info['width'], $action['data']['width']);
+      }
+      if (isset($action['data']['yoffset'])) {
+        $action['data']['yoffset'] = _imagecache_keyword_filter($action['data']['yoffset'], $image->info['height'], $action['data']['height']);
       }
     }
     if (!_imagecache_apply_action($action, $image)) {
@@ -575,9 +587,7 @@ function imagecache_build_derivative($actions, $src, $dst) {
   }
 
   if (!imageapi_image_close($image, $dst)) {
-    if (file_exists($dst)) {
-      watchdog('imagecache', 'Cached image file %dst already exists. There may be an issue with your rewrite configuration.', array('%dst' => $dst), WATCHDOG_ERROR);
-    }
+    watchdog('imagecache', 'There was an error saving the new image file %dst.', array('%dst' => $dst), WATCHDOG_ERROR);
     return FALSE;
   }
 
@@ -728,28 +738,6 @@ function theme_imagecache_formatter_url($element) {
   $presetname = substr($element['#formatter'], 0, strrpos($element['#formatter'], '_'));
 
   return imagecache_create_url($presetname, $element['#item']['filepath']);
-}
-
-/**
- * Filter key word values such as 'top', 'right', 'center', and also percentages.
- * All returned values are in pixels relative to the passed in height and width.
- */
-function _imagecache_filter($key, $value, $current_width, $current_height, $new_width = NULL, $new_height = NULL) {
-  switch ($key) {
-    case 'width':
-      $value = _imagecache_percent_filter($value, $current_width);
-      break;
-    case 'height':
-      $value = _imagecache_percent_filter($value, $current_height);
-      break;
-    case 'xoffset':
-      $value = _imagecache_keyword_filter($value, $current_width, $new_width);
-      break;
-    case 'yoffset':
-      $value = _imagecache_keyword_filter($value, $current_height, $new_height);
-      break;
-  }
-  return $value;
 }
 
 /**
