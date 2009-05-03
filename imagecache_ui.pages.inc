@@ -285,39 +285,6 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     );
   }
 
-/**
- @todo: 404/403 image per preset.
- @todo: global 404/403 image.
-
-  $form['files'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' =>  t('Error Files'),
-  );
-
-  $form['files']['403']['file'] = array(
-    '#type' => 'file',
-    '#title' => t('403 Image'),
-    '#description' => t('Image that will be used when access is denied to the source image.'),
-  );
-
-  $path403 = imagecache/'. $preset['presetname'] .'/403.png';
-  if (file_exists($path403)) {
-    $url403 =  imagecache_create_url($preset['presetname'], $path403);
-
-    $form['files']['403']['view'] = array(
-      '#value' => '<img src="'. $url403 .'">',
-    );
-  }
-
-  $form['files']['404'] = array(
-    '#type' => 'file',
-    '#title' => t('404 Image'),
-    '#description' => t('Image that will be used when the source image cannot be found.'),
-  );
-  */
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => $preset['storage'] === IMAGECACHE_STORAGE_DEFAULT ? t('Override Defaults') : t('Update Preset'),
