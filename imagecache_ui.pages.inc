@@ -40,48 +40,6 @@ function imagecache_ui_preset_overview() {
   return $output;
 }
 
-
-function imagecache_ui_preset_add_form($form_state) {
-  $form = array();
-  $form['presetname'] = array(
-    '#type' => 'textfield',
-    '#size' => '64',
-    '#title' => t('Preset Namespace'),
-    '#default_value' => '',
-    '#description' => t('The namespace is used in URLs for images to tell imagecache how to process an image. Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'),
-    '#required' => TRUE,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Create New Preset'),
-  );
-  return $form;
-}
-
-function imagecache_ui_preset_add_form_validate($form, &$form_state) {
-  $values = $form_state['values'];
-  // Check for duplicates
-  foreach (imagecache_presets() as $preset) {
-    if ($values['presetname'] == $preset['presetname']) {
-      form_set_error('presetname', t('The namespace you have chosen is already in use.'));
-      break;
-    }
-  }
-
-  // Check for illegal characters in preset names
-  if (preg_match('/[^0-9a-zA-Z_\-]/', $values['presetname'])) {
-    form_set_error('presetname', t('Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'));
-  }
-}
-
-function  imagecache_ui_preset_add_form_submit($form, &$form_state) {
-  $preset = array('presetname' => $form_state['values']['presetname']);
-  $preset = imagecache_preset_save($preset);
-  drupal_set_message(t('Preset %name (ID: @id) was created.', array('%name' => $preset['presetname'], '@id' => $preset['presetid'])));
-  $form_state['redirect'] = 'admin/build/imagecache/'. $preset['presetid'];
-}
-
-
 function imagecache_ui_preset_delete_form($form_state, $preset = array()) {
   if (empty($preset)) {
     drupal_set_message(t('The specified preset was not found'), 'error');
@@ -173,14 +131,15 @@ function imagecache_ui_preset_export_form(&$form_state, $preset = array()) {
 
 
 function imagecache_ui_preset_form($form_state, $preset = array()) {
-  if (empty($preset)) {
-    drupal_set_message(t('The specified preset was not found.'), 'error');
-    drupal_goto('admin/build/imagecache');
-  }
-
   $form = array();
-  // @TODO: for some reason, simply setting '#disabled' on the normal presetname
-  // textfield fails to pass the values successfully to the submit handler.
+
+  $form['presetid'] = array(
+    '#type' => 'value',
+    '#value' => $preset['presetid'],
+  );
+
+  // Browsers don't submit disabled form values so we've got to put two copies
+  // of the name on the form: one for the submit handler and one for the user.
   if ($preset['storage'] === IMAGECACHE_STORAGE_DEFAULT) {
     $form['presetname'] = array(
       '#type' => 'value',
@@ -205,10 +164,16 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     );
   }
 
-  $form['presetid'] = array(
-    '#type' => 'value',
-    '#value' => $preset['presetid'],
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => $preset['storage'] === IMAGECACHE_STORAGE_DEFAULT ? t('Override Defaults') : t('Save Preset'),
+    '#weight' => 9,
   );
+
+  // For new presets don't show the preview or all actions to be added.
+  if (empty($preset['presetid'])) {
+    return $form;
+  }
 
   $form['actions'] = array(
     '#type' => 'fieldset',
@@ -222,9 +187,8 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     if (!$definition = imagecache_action_definition($action['action'])) {
       continue;
     }
-    $action_name =  t($definition['name']);
     $action_form['name'] = array(
-      '#value' => $action_name,
+      '#value' => t($definition['name']),
     );
 
     $action_form['action'] = array(
@@ -272,8 +236,6 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#collapsed' => count($preset['actions']) > 0,
     '#access' => $preset['storage'] !== IMAGECACHE_STORAGE_DEFAULT,
   );
-
-
   foreach (imagecache_action_definitions() as $action => $definition) {
     $form['actions']['new'][] = array(
       '#type' => 'markup',
@@ -284,11 +246,6 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
                     ' - '. $definition['description'],
     );
   }
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => $preset['storage'] === IMAGECACHE_STORAGE_DEFAULT ? t('Override Defaults') : t('Update Preset'),
-  );
 
   // Display a preview image for this action. Put it below the submit button so
   // users don't have to do a bunch of scrolling.
@@ -306,9 +263,26 @@ function imagecache_ui_preset_form($form_state, $preset = array()) {
     '#type' => 'item',
     '#title' => t('Preview'),
     '#value' => l($imagecache_path, $imagecache_path) .'<br />'. l("<img src='$imagecache_path' />", $imagecache_path, array('html' => TRUE)),
+    '#weight' => 10,
   );
 
   return $form;
+}
+
+function imagecache_ui_preset_form_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  // Check for duplicates
+  foreach (imagecache_presets() as $preset) {
+    if ($values['presetname'] == $preset['presetname'] && $values['presetid'] != $preset['presetid']) {
+      form_set_error('presetname', t('The preset name you have chosen is already in use.'));
+      break;
+    }
+  }
+
+  // Check for illegal characters in preset names
+  if (preg_match('/[^0-9a-zA-Z_\-]/', $values['presetname'])) {
+    form_set_error('presetname', t('Please only use alphanumeric characters, underscores (_), and hyphens (-) for preset names.'));
+  }
 }
 
 function imagecache_ui_preset_form_submit($form, &$form_state) {
@@ -327,9 +301,6 @@ function imagecache_ui_preset_form_submit($form, &$form_state) {
 
   // Push back to the preset form
   $form_state['redirect'] = 'admin/build/imagecache/'. $preset['presetid'];
-
-  // Clear preset cache
-  imagecache_presets(TRUE);
 }
 
 function theme_imagecache_ui_preset_actions($form) {
@@ -369,8 +340,12 @@ function theme_imagecache_ui_preset_actions($form) {
       'class' => 'draggable',
     );
   }
-  $output = theme('table', $header, $rows, array('id' => 'imagecache-preset-actions'));
-  drupal_add_tabledrag('imagecache-preset-actions', 'order', 'sibling', 'imagecache-action-order-weight');
+
+  $output = '';
+  if ($rows) {
+    drupal_add_tabledrag('imagecache-preset-actions', 'order', 'sibling', 'imagecache-action-order-weight');
+    $output = theme('table', $header, $rows, array('id' => 'imagecache-preset-actions'));
+  }
   $output .= drupal_render($form);
   return $output;
 }
