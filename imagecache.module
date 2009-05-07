@@ -204,7 +204,7 @@ function imagecache_imagecache_actions() {
     ),
     'imagecache_scale_and_crop' => array(
       'name' => 'Scale And Crop',
-      'description' => 'Resize an image to an exact set of dimensions, ignoring aspect ratio.',
+      'description' => 'Resize an image while maintaining aspect ratio, then crop it to the specified dimensions.',
       'file' => 'imagecache_actions.inc',
     ),
     'imagecache_crop' => array(
