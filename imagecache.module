@@ -480,6 +480,8 @@ function imagecache_transfer($path) {
 
   if ($fileinfo = stat($path)) {
     $headers[] = 'Content-Length: '. $fileinfo[7];
+    $headers[] = 'Expires: ' . gmdate('D, d M Y H:i:s', time() + 1209600) .' GMT';
+    $headers[] = 'Cache-Control: max-age=1209600, private, must-revalidate';
     _imagecache_cache_set_cache_headers($fileinfo, $headers);
   }
   file_transfer($path, $headers);
