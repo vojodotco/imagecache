@@ -365,7 +365,7 @@ function imagecache_cache_private() {
   $preset = check_plain(array_shift($args));
   $source = implode('/', $args);
 
-  if (user_access('view imagecache '. $preset)) {
+  if (user_access('view imagecache '. $preset) && !in_array(-1, module_invoke_all('file_download', $source))) {
     _imagecache_cache($preset, $source);
   }
   else {
