@@ -1006,7 +1006,7 @@ function imagecache_preset_save($preset) {
 }
 
 function imagecache_preset_delete($preset) {
-  imagecache_preset_flush($preset['presetid']);
+  imagecache_preset_flush($preset);
   db_query('DELETE FROM {imagecache_action} where presetid = %d', $preset['presetid']);
   db_query('DELETE FROM {imagecache_preset} where presetid = %d', $preset['presetid']);
   imagecache_presets(TRUE);
@@ -1029,8 +1029,9 @@ function imagecache_preset_actions($preset, $reset = FALSE) {
 
 /**
  * Flush cached media for a preset.
- * @param id
- *   A preset id.
+ *
+ * @param preset
+ *   an imagecache preset array.
  */
 function imagecache_preset_flush($preset) {
   if (user_access('flush imagecache')) {
