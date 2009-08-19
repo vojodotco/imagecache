@@ -1080,6 +1080,11 @@ function imagecache_action_save($action) {
   $definition = imagecache_action_definition($action['action']);
   $action = array_merge($definition, $action);
 
+  // Some actions don't have data. Make an empty one to prevent SQL errors.
+  if (!isset($action['data'])) {
+    $action['data'] = array();
+  }
+
   if (!empty($action['actionid'])) {
     drupal_write_record('imagecache_action', $action, 'actionid');
   }
