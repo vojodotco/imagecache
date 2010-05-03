@@ -859,7 +859,7 @@ function theme_imagecache($presetname, $path, $alt = '', $title = '', $attribute
 function theme_imagecache_imagelink($presetname, $path, $alt = '', $title = '', $attributes = NULL) {
   $image = theme('imagecache', $presetname, $path, $alt, $title);
   $original_image_url = file_create_url($path);
-  return l($image, $original_image_url, array('absolute' => FALSE, 'html' => TRUE));
+  return l($image, $original_image_url, array('absolute' => FALSE, 'html' => TRUE, 'attributes' => $attributes));
 }
 
 /**
