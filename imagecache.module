@@ -557,6 +557,14 @@ function imagecache_build_derivative($actions, $src, $dst) {
     return FALSE;
   }
 
+  // file_check_directory() has an annoying habit of displaying "directory ... 
+  // has been created" status messages. To avoid confusing visitors we clear 
+  // out all the status messages for non-ImageCache admins. This might affect
+  // some other messages but errors and warnings should still be displayed.
+  if (!user_access('administer imagecache')) {
+    drupal_get_messages('status', TRUE);
+  }
+
   // Simply copy the file if there are no actions.
   if (empty($actions)) {
     return file_copy($src, $dst, FILE_EXISTS_REPLACE);
