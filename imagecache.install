@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
  function imagecache_requirements($phase) {
   $requirements = array();

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function imagecache_resize_form($action) {
   $form['width'] = array(

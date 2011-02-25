@@ -1,4 +1,3 @@
-; $Id$
 name = ImageCache
 description = Dynamic image manipulator and cache.
 package = ImageCache
