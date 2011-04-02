@@ -699,10 +699,10 @@ function theme_imagecache_formatter_default($element) {
 }
 
 /**
- * Theme imagecache preset with an absolute link to node.
+ * Theme formatter for imagecache preset with an absolute link to node.
  */
 function theme_imagecache_formatter_linked_absolute($element) {
-  // Call the same correct imagecache_formatter_{preset}_linked with
+  // Call the same correct imagecache_formatter_[preset]_linked with
   // the absolute argument as TRUE
   return theme(substr($element['#theme'], 0, -9), $element, TRUE);
 }
